@@ -7,6 +7,8 @@
 #define GRAVITY_SPEED 0.8 //toc do roi
 #define MAX_FALL_SPEED 10 //toc do roi toi da
 #define PLAYER_SPEED 8 // toc do nhan vat
+#define PLAYER_JUMP_VAL 15
+#define GRAVITY 0.8
 
 class MainOb : public BaseObject
 {
@@ -20,7 +22,7 @@ public:
         Walk_Left = 1,
     };
     bool LoadImg(std::string path, SDL_Renderer* screen);
-    void Show(SDL_Renderer* des);
+    void Show(SDL_Renderer* des, Map& map_data);
     void HandelInputAction(SDL_Event events, SDL_Renderer* screen);
     void set_clips(); // xu li ve animation
 

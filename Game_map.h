@@ -4,7 +4,7 @@
 #include "CommonFunc.h"
 #include "BaseObject.h"
 
-#define MAX_TILES 20
+#define MAX_TILES 14
 
 class TileMat : public BaseObject
 {

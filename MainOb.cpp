@@ -43,17 +43,10 @@ void MainOb::set_clips()
 {
     if (width_frame_ > 0 && height_frame_ > 0)
     {
-        for (int i = 0 ; i < 8; i++)
+        for (int i = 0; i < 16; i++)
         {
-            frame_clip_[i].x = i*width_frame_;
-            frame_clip_[i].y = 0;
-            frame_clip_[i].w = width_frame_;
-            frame_clip_[i].h = height_frame_;
-        }
-        for (int i = 0 ; i < 8; i++)
-        {
-            frame_clip_[i].x = i*width_frame_;
-            frame_clip_[i].y = height_frame_;
+            frame_clip_[i].x = (i % 8) * width_frame_; // Chia 8 frame mỗi hàng
+            frame_clip_[i].y = (i / 8) * height_frame_; // Xuống hàng sau 8 frame
             frame_clip_[i].w = width_frame_;
             frame_clip_[i].h = height_frame_;
         }
@@ -61,7 +54,7 @@ void MainOb::set_clips()
     }
 }
 
-void MainOb::Show(SDL_Renderer* des)
+void MainOb::Show(SDL_Renderer* des, Map& map_data)
 {
     if(status_ == Walk_Left)
     {
@@ -86,8 +79,8 @@ void MainOb::Show(SDL_Renderer* des)
         frame_ = 0;
     }
 
-    rect_.x = x_pos_ - map_x_;
-    rect_.y = y_pos_ - map_y_;
+    rect_.x = x_pos_ - map_data.start_x_;
+    rect_.y = y_pos_ - map_data.start_y_;
 
     SDL_Rect* current_clips = &frame_clip_[frame_];
 
@@ -103,17 +96,19 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
         switch (events.key.keysym.sym)
         {
         case SDLK_RIGHT:
-            {
-                status_ = Walk_Right;
-                input_type_.right_ = 1;
-                input_type_.left_ = 0;
-            }
+            status_ = Walk_Right;
+            input_type_.right_ = 1;
+            input_type_.left_ = 0;
             break;
         case SDLK_LEFT:
+            status_ = Walk_Left;
+            input_type_.left_ = 1;
+            input_type_.right_ = 0;
+            break;
+        case SDLK_UP:
+            if (on_ground_)
             {
-                status_ = Walk_Left;
-                input_type_.left_ = 1;
-                input_type_.right_ = 0;
+                input_type_.jump_ = 1;
             }
             break;
         }
@@ -123,23 +118,42 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
         switch (events.key.keysym.sym)
         {
         case SDLK_RIGHT:
-            {
-                input_type_.right_ = 0;
-            }
+            input_type_.right_ = 0;
             break;
         case SDLK_LEFT:
-            {
-                input_type_.left_ = 0;
-            }
+            input_type_.left_ = 0;
+            break;
+         case SDLK_UP:
+            input_type_.jump_ = 0;
             break;
         }
     }
+
+    if (events.type == SDL_KEYDOWN)
+    {
+        if (events.key.keysym.sym == SDLK_UP)
+        {
+            if (on_ground_)   // Chỉ cho phép nhảy khi đang đứng trên đất
+            {
+                input_type_.jump_ = 1;
+            }
+        }
+    }
+
+    if (events.type == SDL_KEYUP)
+    {
+        if (events.key.keysym.sym == SDLK_UP)
+        {
+            input_type_.jump_ = 0; // Reset trạng thái nhảy khi nhả phím
+        }
+    }
+
 }
 
 void MainOb::Do_Player(Map& map_data)
 {
     x_val_ = 0;
-    y_val_ += 0.8;
+    y_val_ += GRAVITY;
 
     if (y_val_ >= MAX_FALL_SPEED)
     {
@@ -153,6 +167,12 @@ void MainOb::Do_Player(Map& map_data)
     else if (input_type_.right_ == 1)
     {
         x_val_ += PLAYER_SPEED;
+    }
+
+    if (input_type_.jump_ == 1 && on_ground_)
+    {
+        y_val_= - PLAYER_JUMP_VAL;
+        on_ground_ = false;
     }
 
     CheckToMap(map_data);
@@ -198,28 +218,28 @@ void MainOb::CheckToMap(Map& map_data)
     x2 = (x_pos_ + x_val_ + width_frame_ - 1)/TILE_SIZE; // tru di mot luong nho de check va cham
 
     y1 = (y_pos_) / TILE_SIZE;
-    y2 + (y_pos_ + height_min - 1)/TILE_SIZE;
+    y2 = (y_pos_ + height_min - 1)/TILE_SIZE;
 
     if (x1 >= 0 && x2 < MAX_MAP_X && y1 >= 0 && y2 < MAX_MAP_Y)
     {
-        if (x_val_ > 0) // nhan vat dang di chuyen sang phai
+        if (x_val_ > 0) // Di chuyển sang phải
         {
             if (map_data.tile[y1][x2] != BLANK_TILE || map_data.tile[y2][x2] != BLANK_TILE)
             {
-                x_pos_ = x2*TILE_SIZE;
-                x_pos_ -= width_frame_ + 1;
+                x_pos_ = x2 * TILE_SIZE - width_frame_; // Căn nhân vật vào sát mép trái tile
                 x_val_ = 0;
             }
         }
-        else if (x_val_ < 0) // di lui
+        else if (x_val_ < 0) // Di chuyển sang trái
         {
             if (map_data.tile[y1][x1] != BLANK_TILE || map_data.tile[y2][x1] != BLANK_TILE)
             {
-                x_pos_ = (x1 + 1)*TILE_SIZE;
+                x_pos_ = (x1 + 1) * TILE_SIZE; // Đặt nhân vật ở mép phải tile
                 x_val_ = 0;
             }
         }
     }
+
 
     //check theo chieu doc
     int width_min = width_frame_ < TILE_SIZE ? width_frame_ : TILE_SIZE;
@@ -231,24 +251,20 @@ void MainOb::CheckToMap(Map& map_data)
 
     if (x1 >= 0 && x2 < MAX_MAP_X && y1 >= 0 && y2 < MAX_MAP_Y)
     {
-        if (y_val_ > 0) // trang thai roi tu do
+        if (y_val_ > 0) // Rơi xuống
         {
             if (map_data.tile[y2][x1] != BLANK_TILE || map_data.tile[y2][x2] != BLANK_TILE)
             {
-                y_pos_ = y2* TILE_SIZE;
-                y_pos_ -= (height_frame_ + 1);
+                y_pos_ = y2 * TILE_SIZE - height_frame_; // Căn nhân vật lên trên tile
                 y_val_ = 0;
-                on_ground_ = true;
+                on_ground_ = true; // Đánh dấu nhân vật đang đứng trên mặt đất
             }
-        }
-        else if (y_val_ < 0) // trang thai nhay
-        {
-            if (map_data.tile[y1][x1] != BLANK_TILE || map_data.tile[y1][x2] != BLANK_TILE)//truong hop map o giua khong trung
+            else
             {
-                y_pos_ = (y1 + 1)*TILE_SIZE;
-                y_val_ = 0;
+                on_ground_ = false; // Không va chạm => đang rơi
             }
         }
+
     }
 
     x_pos_ += x_val_;
@@ -260,7 +276,7 @@ void MainOb::CheckToMap(Map& map_data)
     }
     else if (x_pos_ + width_frame_ > map_data.max_x_)
     {
-        x_pos_ = map_data.max_x_ - width_frame_ - 1;
-
+        x_pos_ = map_data.max_x_ - width_frame_;
     }
+
 }
