@@ -48,6 +48,11 @@ private:
 
     int map_x_;
     int map_y_;
+
+    int jump_count_; // Đếm số lần nhảy
+    const int max_jump_ = 2; // Số lần nhảy tối đa (2 lần)
+
+    int come_back_time_;
 };
 
 

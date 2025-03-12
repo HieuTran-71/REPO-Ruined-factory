@@ -19,6 +19,8 @@ MainOb::MainOb()
     on_ground_ = false;
     map_x_ = 0;
     map_y_ = 0;
+    jump_count_ = 0;
+    come_back_time_ = 0;
 }
 
 MainOb::~MainOb()
@@ -32,8 +34,8 @@ bool MainOb::LoadImg(std::string path, SDL_Renderer *screen)
 
     if (ret == true)
     {
-        width_frame_ = rect_.w/8;
-        height_frame_ = rect_.h/2;
+        width_frame_ = 90;
+        height_frame_ = rect_.h;
     }
 
     return ret;
@@ -45,8 +47,8 @@ void MainOb::set_clips()
     {
         for (int i = 0; i < 16; i++)
         {
-            frame_clip_[i].x = (i % 8) * width_frame_; // Chia 8 frame mỗi hàng
-            frame_clip_[i].y = (i / 8) * height_frame_; // Xuống hàng sau 8 frame
+            frame_clip_[i].x = i * width_frame_;
+            frame_clip_[i].y = 0;
             frame_clip_[i].w = width_frame_;
             frame_clip_[i].h = height_frame_;
         }
@@ -79,14 +81,18 @@ void MainOb::Show(SDL_Renderer* des, Map& map_data)
         frame_ = 0;
     }
 
-    rect_.x = x_pos_ - map_data.start_x_;
-    rect_.y = y_pos_ - map_data.start_y_;
+    if (come_back_time_ == 0)
+    {
+        rect_.x = x_pos_ - map_data.start_x_;
+        rect_.y = y_pos_ - map_data.start_y_;
 
-    SDL_Rect* current_clips = &frame_clip_[frame_];
+        SDL_Rect* current_clips = &frame_clip_[frame_];
 
-    SDL_Rect renderQuad = {rect_.x, rect_.y, width_frame_, height_frame_};
+        SDL_Rect renderQuad = {rect_.x, rect_.y, width_frame_, height_frame_};
 
-    SDL_RenderCopy(des, p_object_, current_clips, &renderQuad);
+        SDL_RenderCopy(des, p_object_, current_clips, &renderQuad);
+    }
+
 }
 
 void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
@@ -95,20 +101,22 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
     {
         switch (events.key.keysym.sym)
         {
-        case SDLK_RIGHT:
+        case SDLK_d:
             status_ = Walk_Right;
             input_type_.right_ = 1;
             input_type_.left_ = 0;
             break;
-        case SDLK_LEFT:
+        case SDLK_a:
             status_ = Walk_Left;
             input_type_.left_ = 1;
             input_type_.right_ = 0;
             break;
-        case SDLK_UP:
-            if (on_ground_)
+        case SDLK_w:
+            if (jump_count_ < max_jump_)
             {
-                input_type_.jump_ = 1;
+                y_val_ = -PLAYER_JUMP_VAL;  // Nhảy lên
+                jump_count_++;              // Tăng số lần nhảy
+                on_ground_ = false;         // Đánh dấu nhân vật không đứng trên đất
             }
             break;
         }
@@ -117,13 +125,13 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
     {
         switch (events.key.keysym.sym)
         {
-        case SDLK_RIGHT:
+        case SDLK_d:
             input_type_.right_ = 0;
             break;
-        case SDLK_LEFT:
+        case SDLK_a:
             input_type_.left_ = 0;
             break;
-         case SDLK_UP:
+         case SDLK_w:
             input_type_.jump_ = 0;
             break;
         }
@@ -131,7 +139,7 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
 
     if (events.type == SDL_KEYDOWN)
     {
-        if (events.key.keysym.sym == SDLK_UP)
+        if (events.key.keysym.sym == SDLK_w)
         {
             if (on_ground_)   // Chỉ cho phép nhảy khi đang đứng trên đất
             {
@@ -142,7 +150,7 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
 
     if (events.type == SDL_KEYUP)
     {
-        if (events.key.keysym.sym == SDLK_UP)
+        if (events.key.keysym.sym == SDLK_w)
         {
             input_type_.jump_ = 0; // Reset trạng thái nhảy khi nhả phím
         }
@@ -152,31 +160,56 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
 
 void MainOb::Do_Player(Map& map_data)
 {
-    x_val_ = 0;
-    y_val_ += GRAVITY;
-
-    if (y_val_ >= MAX_FALL_SPEED)
+    if (come_back_time_ == 0)
     {
-        y_val_ = MAX_FALL_SPEED;
+        x_val_ = 0;
+        y_val_ += GRAVITY;
+
+        if (y_val_ >= MAX_FALL_SPEED)
+        {
+            y_val_ = MAX_FALL_SPEED;
+        }
+
+        if (input_type_.left_ == 1)
+        {
+            x_val_ -= PLAYER_SPEED;
+        }
+        else if (input_type_.right_ == 1)
+        {
+            x_val_ += PLAYER_SPEED;
+        }
+
+        if (input_type_.jump_ == 1 && on_ground_)
+        {
+            y_val_= - PLAYER_JUMP_VAL;
+            on_ground_ = false;
+        }
+
+        CheckToMap(map_data);
+        CenterEntityOnMap(map_data);
     }
 
-    if (input_type_.left_ == 1)
+    if (come_back_time_ > 0)
     {
-        x_val_ -= PLAYER_SPEED;
-    }
-    else if (input_type_.right_ == 1)
-    {
-        x_val_ += PLAYER_SPEED;
+        come_back_time_--;
+        if (come_back_time_ == 0)
+        {
+            if (x_pos_ > 192)
+            {
+                x_pos_-= 192; // 4 tile map
+                map_x_ -= 192;
+            }
+            else
+            {
+                x_pos_ = 0;
+            }
+            y_pos_ = 0;
+            x_val_ = 0;
+            y_val_ = 0;
+
+        }
     }
 
-    if (input_type_.jump_ == 1 && on_ground_)
-    {
-        y_val_= - PLAYER_JUMP_VAL;
-        on_ground_ = false;
-    }
-
-    CheckToMap(map_data);
-    CenterEntityOnMap(map_data);
 }
 
 void MainOb::CenterEntityOnMap(Map& map_data)
@@ -258,6 +291,7 @@ void MainOb::CheckToMap(Map& map_data)
                 y_pos_ = y2 * TILE_SIZE - height_frame_; // Căn nhân vật lên trên tile
                 y_val_ = 0;
                 on_ground_ = true; // Đánh dấu nhân vật đang đứng trên mặt đất
+                jump_count_ = 0; // reset so lan nhay
             }
             else
             {
@@ -277,6 +311,11 @@ void MainOb::CheckToMap(Map& map_data)
     else if (x_pos_ + width_frame_ > map_data.max_x_)
     {
         x_pos_ = map_data.max_x_ - width_frame_;
+    }
+
+    if (y_pos_ > map_data.max_y_)
+    {
+        come_back_time_ = 50;
     }
 
 }
