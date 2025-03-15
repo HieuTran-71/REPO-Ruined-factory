@@ -1,8 +1,11 @@
 #ifndef MAIN_OB_H_
 #define MAIN_OB_H_
 
+#include <vector>
 #include "BaseObject.h"
 #include "CommonFunc.h"
+#include "Bullet.h"
+
 
 #define GRAVITY_SPEED 0.8 //toc do roi
 #define MAX_FALL_SPEED 10 //toc do roi toi da
@@ -30,7 +33,20 @@ public:
     void CheckToMap(Map& map_data); // check va cham voi map
     void SetMapXY(const int map_x, const int map_y) {map_x_ = map_x; map_y_ = map_y;}
     void CenterEntityOnMap(Map& map_data); // ham xy ly thong so map khi di chuyen nhan vat
+    void UpdateImagePlayer(SDL_Renderer* des); // xu li dan ban
+
+    void set_bullet_list(std::vector<Bullet*> bullet_list)
+    {
+        p_bullet_list_ = bullet_list;
+    }
+    std::vector<Bullet*> get_bullet_list() const {return p_bullet_list_;}
+    void HandleBullet(SDL_Renderer* des);
+    void IncreaseSp(); // ktra tang so luong vat pham ho tro
 private:
+    int sp_count; // vat pham ho tro
+
+    std::vector<Bullet*> p_bullet_list_; //bang dan
+
     float x_val_;
     float y_val_;
 
@@ -53,6 +69,8 @@ private:
     const int max_jump_ = 2; // Số lần nhảy tối đa (2 lần)
 
     int come_back_time_;
+
+
 };
 
 

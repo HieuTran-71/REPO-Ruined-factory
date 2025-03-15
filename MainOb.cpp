@@ -21,6 +21,7 @@ MainOb::MainOb()
     map_y_ = 0;
     jump_count_ = 0;
     come_back_time_ = 0;
+    sp_count = 0;
 }
 
 MainOb::~MainOb()
@@ -54,6 +55,11 @@ void MainOb::set_clips()
         }
 
     }
+}
+
+void MainOb::IncreaseSp()
+{
+    sp_count++;
 }
 
 void MainOb::Show(SDL_Renderer* des, Map& map_data)
@@ -156,6 +162,61 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
         }
     }
 
+    if (events.type == SDL_MOUSEBUTTONDOWN)
+    {
+        if (events.button.button == SDL_BUTTON_LEFT)
+        {
+
+            Bullet* p_bullet = new Bullet(); //tao ra vien dan
+            p_bullet->LoadImg("image/Bullet.png", screen);
+
+
+
+            if (status_ == Walk_Left)
+            {
+                p_bullet->set_bullet_dir(Bullet::DIR_LEFT);
+                p_bullet->SetRect(this->rect_.x, rect_.y + height_frame_*0.3); // set vi tri dan khi ban
+            }
+            else if(status_ == Walk_Right)
+            {
+                p_bullet->set_bullet_dir(Bullet::DIR_RIGHT);
+                p_bullet->SetRect(this->rect_.x, rect_.y + height_frame_*0.3);
+            }
+
+
+            p_bullet->set_x_val(20); // toc do di chuyen cua dan
+            p_bullet->set_y_val(20);
+            p_bullet->set_is_move(true);
+
+            p_bullet_list_.push_back(p_bullet);
+        }
+    }
+
+}
+
+void MainOb::HandleBullet(SDL_Renderer* des)
+{
+    for (int i = 0 ; i < p_bullet_list_.size(); i++)
+    {
+        Bullet* p_bullet = p_bullet_list_.at(i);
+        if (p_bullet != NULL)
+        {
+             if (p_bullet->get_is_move() == true)
+            {
+                p_bullet->HandleMove(SCREEN_WIDTH, SCREEN_HEIGHT);
+                p_bullet->Render(des);
+            }
+            else
+            {
+                p_bullet_list_.erase(p_bullet_list_.begin() + i);
+                if (p_bullet != NULL)
+                {
+                    delete p_bullet;
+                    p_bullet = NULL;
+                }
+            }
+        }
+    }
 }
 
 void MainOb::Do_Player(Map& map_data)
@@ -257,19 +318,46 @@ void MainOb::CheckToMap(Map& map_data)
     {
         if (x_val_ > 0) // Di chuyển sang phải
         {
-            if (map_data.tile[y1][x2] != BLANK_TILE || map_data.tile[y2][x2] != BLANK_TILE)
+
+            int val1 = map_data.tile[y1][x2];
+            int val2 = map_data.tile[y2][x2];
+
+            if (val1 == STATE_SUPPORT || val2 == STATE_SUPPORT)
             {
-                x_pos_ = x2 * TILE_SIZE - width_frame_; // Căn nhân vật vào sát mép trái tile
-                x_val_ = 0;
+                map_data.tile[y1][x2] = 0;
+                map_data.tile[y2][x2] = 0;
+                IncreaseSp();
             }
+            else
+            {
+                if (val1 != BLANK_TILE || val2 != BLANK_TILE)
+                {
+                    x_pos_ = x2 * TILE_SIZE - width_frame_; // Căn nhân vật vào sát mép trái tile
+                    x_val_ = 0;
+                }
+            }
+
         }
         else if (x_val_ < 0) // Di chuyển sang trái
         {
-            if (map_data.tile[y1][x1] != BLANK_TILE || map_data.tile[y2][x1] != BLANK_TILE)
+            int val1 = map_data.tile[y1][x1];
+            int val2 = map_data.tile[y2][x1];
+
+            if (val1 == STATE_SUPPORT || val2 == STATE_SUPPORT)
             {
-                x_pos_ = (x1 + 1) * TILE_SIZE; // Đặt nhân vật ở mép phải tile
-                x_val_ = 0;
+                map_data.tile[y1][x1] = 0;
+                map_data.tile[y2][x1] = 0;
+                IncreaseSp();
             }
+            else
+            {
+                if (val1 != BLANK_TILE || val2 != BLANK_TILE)
+                {
+                    x_pos_ = (x1 + 1) * TILE_SIZE; // Đặt nhân vật ở mép phải tile
+                    x_val_ = 0;
+                }
+            }
+
         }
     }
 
@@ -286,17 +374,30 @@ void MainOb::CheckToMap(Map& map_data)
     {
         if (y_val_ > 0) // Rơi xuống
         {
-            if (map_data.tile[y2][x1] != BLANK_TILE || map_data.tile[y2][x2] != BLANK_TILE)
+            int val1 = map_data.tile[y2][x1];
+            int val2 = map_data.tile[y2][x2];
+
+            if (val1 == STATE_SUPPORT || val2 == STATE_SUPPORT)
             {
-                y_pos_ = y2 * TILE_SIZE - height_frame_; // Căn nhân vật lên trên tile
-                y_val_ = 0;
-                on_ground_ = true; // Đánh dấu nhân vật đang đứng trên mặt đất
-                jump_count_ = 0; // reset so lan nhay
+                map_data.tile[y2][x1] = 0;
+                map_data.tile[y2][x2] = 0;
+                IncreaseSp();
             }
             else
             {
-                on_ground_ = false; // Không va chạm => đang rơi
+                if (val1 != BLANK_TILE || val2 != BLANK_TILE)
+                {
+                    y_pos_ = y2 * TILE_SIZE - height_frame_; // Căn nhân vật lên trên tile
+                    y_val_ = 0;
+                    on_ground_ = true; // Đánh dấu nhân vật đang đứng trên mặt đất
+                    jump_count_ = 0; // reset so lan nhay
+                }
+                else
+                {
+                    on_ground_ = false; // Không va chạm => đang rơi
+                }
             }
+
         }
 
     }

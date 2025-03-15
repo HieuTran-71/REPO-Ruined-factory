@@ -15,7 +15,7 @@ bool InitData()
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1");
 
-    g_window = SDL_CreateWindow("Hunter adventure", SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    g_window = SDL_CreateWindow("R.O.B.O : Ruined factory", SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 
     if(g_window == NULL)
     {
@@ -40,7 +40,7 @@ bool InitData()
 
 bool LoadBackground()
 {
-    bool ret = g_background.LoadImg("image/Game_Background_150.jpg", g_screen);
+    bool ret = g_background.LoadImg("image/background.png", g_screen);
     if(ret == false)
         return false;
 
@@ -99,12 +99,15 @@ int main(int argc, char* argv[])
         SDL_SetRenderDrawColor(g_screen, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR);
         SDL_RenderClear(g_screen);
 
-        g_background.Render(g_screen, NULL);
+        SDL_Rect bg_rect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+        g_background.Render(g_screen, &bg_rect); // nen luon duoc can chinh theo man hinh
+
 
         game_map.DrawMap(g_screen);
 
         Map map_data = game_map.getMap();
 
+        p_player.HandleBullet(g_screen);
         p_player.SetMapXY(map_data.start_x_, map_data.start_y_);
         p_player.Do_Player(map_data);
         p_player.Show(g_screen, map_data);

@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <cstring>
 #include <string>
+#include <cmath>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
@@ -31,20 +32,21 @@ const int RENDER_DRAW_COLOR = 0xff;
 #define MAX_MAP_X 400
 #define MAX_MAP_Y 10
 
+#define STATE_SUPPORT 4
 
-typedef struct
+typedef struct Input
 {
     int left_;
     int right_;
     int up_;
     int down_;
     int jump_;
-}Input;
+};
 
 
 
 
-typedef struct
+typedef struct Map
 {
     int start_x_;
     int start_y_;
@@ -54,7 +56,7 @@ typedef struct
 
     int tile[MAX_MAP_Y][MAX_MAP_X];
     char* file_name;
-}Map;
+};
 
 
 #endif
