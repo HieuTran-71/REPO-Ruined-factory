@@ -42,6 +42,7 @@ public:
     std::vector<Bullet*> get_bullet_list() const {return p_bullet_list_;}
     void HandleBullet(SDL_Renderer* des);
     void IncreaseSp(); // ktra tang so luong vat pham ho tro
+
 private:
     int sp_count; // vat pham ho tro
 

@@ -3,6 +3,7 @@
 #include "Game_map.h"
 #include "MainOb.h"
 #include "Timer.h"
+#include "ThreatOb.h"
 
 BaseObject g_background;
 
@@ -62,6 +63,50 @@ void close()
 }
 
 
+std::vector<ThreatOb*> MakeThreatList()
+{
+    std::vector<ThreatOb*> list_threats;
+
+    ThreatOb* dynamic_threats = new ThreatOb[20];
+    for (int i = 0 ; i < 20 ; i++)
+    {
+        ThreatOb* p_threat = dynamic_threats + i;
+        if (p_threat != NULL)
+        {
+            p_threat->LoadImg("image/threat_Lv1_L.png", g_screen);
+            p_threat->set_clips();
+            p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
+            p_threat->set_x_pos(500 + i*500);
+            p_threat->set_y_pos(200);
+
+            int pos1 = p_threat->get_x_pos() - 60;
+            int pos2 = p_threat->get_x_pos() + 60;
+            p_threat->SetAnimation(pos1,pos2);
+            p_threat->set_input_left(1);
+            list_threats.push_back(p_threat);
+        }
+    }
+
+    ThreatOb* threats_objs = new ThreatOb[20];
+
+    for (int i = 0 ;i < 20; i++)
+    {
+        ThreatOb* p_threat = (threats_objs + i);
+        if (p_threat != NULL)
+        {
+            p_threat->LoadImg("image/threat_Lv1_R.png", g_screen);
+            p_threat->set_clips();
+            p_threat->set_x_pos(700 + i*1200);
+            p_threat->set_y_pos(250);
+
+            list_threats.push_back(p_threat);
+
+        }
+    }
+    return list_threats;
+}
+
+
 int main(int argc, char* argv[])
 {
     ImpTimer fps_timer;
@@ -82,6 +127,8 @@ int main(int argc, char* argv[])
     MainOb p_player;
     p_player.LoadImg("image/move-R.png", g_screen);
     p_player.set_clips();
+
+    std::vector<ThreatOb*> list_threats = MakeThreatList();
 
 
     bool is_quit = false;
@@ -114,6 +161,18 @@ int main(int argc, char* argv[])
 
         game_map.SetMap(map_data);
         game_map.DrawMap(g_screen);
+
+        for (int i = 0 ; i < list_threats.size(); i++)
+        {
+            ThreatOb* p_threat = list_threats.at(i);
+            if (p_threat != NULL)
+            {
+                p_threat->SetMapXY(map_data.start_x_, map_data.start_y_);
+                p_threat->ImpMoveType(g_screen);
+                p_threat->DoPlayer(map_data);
+                p_threat->Show(g_screen);
+            }
+        }
 
         SDL_RenderPresent(g_screen);
 

@@ -162,9 +162,9 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
         }
     }
 
-    if (events.type == SDL_MOUSEBUTTONDOWN)
+    if (events.type == SDL_KEYDOWN)
     {
-        if (events.button.button == SDL_BUTTON_LEFT)
+        if (events.key.keysym.sym == SDLK_j)
         {
 
             Bullet* p_bullet = new Bullet(); //tao ra vien dan

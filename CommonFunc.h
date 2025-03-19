@@ -6,6 +6,7 @@
 #include <cstring>
 #include <string>
 #include <cmath>
+#include <vector>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
