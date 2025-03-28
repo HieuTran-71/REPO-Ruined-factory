@@ -73,36 +73,20 @@ std::vector<ThreatOb*> MakeThreatList()
         ThreatOb* p_threat = dynamic_threats + i;
         if (p_threat != NULL)
         {
-            p_threat->LoadImg("image/threat_Lv1_L.png", g_screen);
+            p_threat->LoadImg("image/threat_Lv1_L .png", g_screen);
             p_threat->set_clips();
             p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
-            p_threat->set_x_pos(500 + i*500);
+            p_threat->set_x_pos(1000 + i*1000);
             p_threat->set_y_pos(200);
 
-            int pos1 = p_threat->get_x_pos() - 60;
-            int pos2 = p_threat->get_x_pos() + 60;
+            int pos1 = p_threat->get_x_pos() - 200;
+            int pos2 = p_threat->get_x_pos() + 200;
             p_threat->SetAnimation(pos1,pos2);
             p_threat->set_input_left(1);
             list_threats.push_back(p_threat);
         }
     }
 
-    ThreatOb* threats_objs = new ThreatOb[20];
-
-    for (int i = 0 ;i < 20; i++)
-    {
-        ThreatOb* p_threat = (threats_objs + i);
-        if (p_threat != NULL)
-        {
-            p_threat->LoadImg("image/threat_Lv1_R.png", g_screen);
-            p_threat->set_clips();
-            p_threat->set_x_pos(700 + i*1200);
-            p_threat->set_y_pos(250);
-
-            list_threats.push_back(p_threat);
-
-        }
-    }
     return list_threats;
 }
 
@@ -174,6 +158,38 @@ int main(int argc, char* argv[])
             }
         }
 
+        std::vector<Bullet*> bullet_arr = p_player.get_bullet_list();
+        for (int m = 0 ; m < bullet_arr.size(); m++)
+        {
+            Bullet* p_bullet = bullet_arr.at(m);
+            if (p_bullet != NULL)
+            {
+                for (int t = 0 ; t < list_threats.size(); t++)
+                {
+                    ThreatOb* obj_threat = list_threats.at(t);
+                    if (obj_threat != NULL)
+                    {
+                        SDL_Rect tRect;
+                        tRect.x = obj_threat->GetRect().x;
+                        tRect.y = obj_threat->GetRect().y;
+                        tRect.w = obj_threat->get_width_frame();
+                        tRect.w = obj_threat->get_height_frame();
+
+                        SDL_Rect bRect = p_bullet->GetRect();
+
+                        bool bCol = SDLCommonFunc::CheckCollision(bRect, tRect);
+
+                        if (bCol)
+                        {
+                            p_player.RemoveBullet(m);
+                            obj_threat->Free();
+                            list_threats.erase(list_threats.begin() + t);
+                        }
+                    }
+                }
+            }
+        }
+
         SDL_RenderPresent(g_screen);
 
         int real_imp_time = fps_timer.get_ticks(); // thoi gian thuc su da troi qua
@@ -186,6 +202,18 @@ int main(int argc, char* argv[])
                 SDL_Delay(delay_time);
         }
     }
+
+    for (int i = 0; i < list_threats.size(); i++)
+    {
+        ThreatOb* p_threat = list_threats.at(i);
+        if (p_threat)
+        {
+            p_threat->Free();
+            p_threat = NULL;
+        }
+    }
+
+    list_threats.clear();
 
     close();
     return 0;

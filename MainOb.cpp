@@ -168,19 +168,20 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
         {
 
             Bullet* p_bullet = new Bullet(); //tao ra vien dan
-            p_bullet->LoadImg("image/Bullet.png", screen);
+            p_bullet->set_bullet_type(Bullet::SPHERE_BULLET);
+            p_bullet->LoadImgBullet(screen);
 
 
 
             if (status_ == Walk_Left)
             {
                 p_bullet->set_bullet_dir(Bullet::DIR_LEFT);
-                p_bullet->SetRect(this->rect_.x, rect_.y + height_frame_*0.3); // set vi tri dan khi ban
+                p_bullet->SetRect(this->rect_.x, rect_.y + height_frame_*0.35); // set vi tri dan khi ban
             }
             else if(status_ == Walk_Right)
             {
                 p_bullet->set_bullet_dir(Bullet::DIR_RIGHT);
-                p_bullet->SetRect(this->rect_.x, rect_.y + height_frame_*0.3);
+                p_bullet->SetRect(this->rect_.x, rect_.y + height_frame_*0.35);
             }
 
 
@@ -215,6 +216,22 @@ void MainOb::HandleBullet(SDL_Renderer* des)
                     p_bullet = NULL;
                 }
             }
+        }
+    }
+}
+
+void MainOb::RemoveBullet(const int& idx)
+{
+    int size = p_bullet_list_.size();
+    if (size > 0 && idx < size)
+    {
+        Bullet* p_bullet = p_bullet_list_.at(idx);
+        p_bullet_list_.erase(p_bullet_list_.begin() + idx);
+
+        if (p_bullet)
+        {
+            delete p_bullet;
+            p_bullet = NULL;
         }
     }
 }

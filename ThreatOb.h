@@ -5,7 +5,7 @@
 #include "CommonFunc.h"
 #include "BaseObject.h"
 
-#define THREAT_FRAME_NUM 7
+#define THREAT_FRAME_NUM 10
 #define THREAT_GRAVITY_SPEED 0.8
 #define THREAT_MAX_FALL_SPEED 10
 #define THREAT_SPEED 3
@@ -38,7 +38,6 @@ public:
     int get_height_frame() const {return height_frame_;}
     void DoPlayer(Map& gMap);
     void CheckToMap(Map& gMap);
-    void InitThreats();
     void set_type_move(const int& TypeMove) {type_move_ = TypeMove;}
     void SetAnimation(const int& pos_a, const int& pos_b) {animation_a_ = pos_a, animation_b_ = pos_b;}
     void set_input_left(const int& ipLeft) {input_type_.left_ = ipLeft;};
@@ -53,7 +52,6 @@ private:
     float x_pos_;
     float y_pos_;
     bool on_ground_;
-    int come_back_time;
     SDL_Rect frame_clip_[THREAT_FRAME_NUM];
     int width_frame_;
     int height_frame_;
