@@ -42,6 +42,7 @@ public:
     void SetAnimation(const int& pos_a, const int& pos_b) {animation_a_ = pos_a, animation_b_ = pos_b;}
     void set_input_left(const int& ipLeft) {input_type_.left_ = ipLeft;};
     void ImpMoveType(SDL_Renderer* screen);
+    SDL_Rect GetRectFrame();
 
 private:
 

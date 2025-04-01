@@ -42,6 +42,17 @@ bool MainOb::LoadImg(std::string path, SDL_Renderer *screen)
     return ret;
 }
 
+SDL_Rect MainOb::GetRectFrame()
+{
+    SDL_Rect rect;
+    rect.x = rect_.x;
+    rect.y = rect_.y;
+    rect.w = width_frame_;
+    rect.h = height_frame_;
+
+    return rect;
+}
+
 void MainOb::set_clips()
 {
     if (width_frame_ > 0 && height_frame_ > 0)

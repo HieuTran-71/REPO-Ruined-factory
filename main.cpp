@@ -4,6 +4,7 @@
 #include "MainOb.h"
 #include "Timer.h"
 #include "ThreatOb.h"
+#include "ExplosionOb.h"
 
 BaseObject g_background;
 
@@ -114,6 +115,18 @@ int main(int argc, char* argv[])
 
     std::vector<ThreatOb*> list_threats = MakeThreatList();
 
+    ExplosionOb exp_player;
+    bool tRet = exp_player.LoadImg("image/exp_bullet.png", g_screen);
+    if (!tRet) return -1;
+    exp_player.set_clips();
+
+    ExplosionOb exp_main;
+    bool mRet = exp_main.LoadImg("image/main_exp.png",g_screen);
+    if (!mRet) return -1;
+    exp_main.set_clips();
+
+
+    int num_die = 0;
 
     bool is_quit = false;
     while (!is_quit) {
@@ -155,9 +168,36 @@ int main(int argc, char* argv[])
                 p_threat->ImpMoveType(g_screen);
                 p_threat->DoPlayer(map_data);
                 p_threat->Show(g_screen);
+
+                SDL_Rect rect_player = p_player.GetRectFrame();
+                SDL_Rect rect_threat = p_threat->GetRectFrame();
+                bool player_threat_Col = SDLCommonFunc::CheckCollision(rect_player, rect_threat);
+                if (player_threat_Col)
+                {
+                    for (int ex = 0 ; ex < 2; ex++)
+                    {
+                        int x_pos = p_player.GetRect().x - exp_main.get_frame_width() * 0.5;
+                        int y_pos = p_player.GetRect().y - exp_main.get_frame_height() * 0.5;
+
+                        exp_main.set_frame(ex);
+                        exp_main.SetRect(x_pos, y_pos);
+                        exp_main.Show(g_screen);
+                        SDL_RenderPresent(g_screen);
+                        SDL_Delay(50);
+                    }
+                    if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
+                    {
+                        p_threat->Free();
+                        close();
+                        SDL_Quit();
+                        return 0;
+                    }
+                }
             }
         }
 
+        int frame_exp_width = exp_player.get_frame_width();
+        int frame_exp_height = exp_player.get_frame_height();
         std::vector<Bullet*> bullet_arr = p_player.get_bullet_list();
         for (int m = 0 ; m < bullet_arr.size(); m++)
         {
@@ -167,20 +207,37 @@ int main(int argc, char* argv[])
                 for (int t = 0 ; t < list_threats.size(); t++)
                 {
                     ThreatOb* obj_threat = list_threats.at(t);
-                    if (obj_threat != NULL)
+                     if (obj_threat != NULL)
                     {
                         SDL_Rect tRect;
                         tRect.x = obj_threat->GetRect().x;
                         tRect.y = obj_threat->GetRect().y;
                         tRect.w = obj_threat->get_width_frame();
-                        tRect.w = obj_threat->get_height_frame();
+                        tRect.h = obj_threat->get_height_frame();
 
                         SDL_Rect bRect = p_bullet->GetRect();
 
-                        bool bCol = SDLCommonFunc::CheckCollision(bRect, tRect);
+                        bool bCol1 = SDLCommonFunc::CheckCollision(bRect, tRect);
 
-                        if (bCol)
+                        if (bCol1)
                         {
+                            for (int ex = 0; ex < NUM_FRAME_EXP; ex++)
+                            {
+                                int x_pos = p_bullet->GetRect().x - frame_exp_width*0.5;
+                                int y_pos = p_bullet->GetRect().y - frame_exp_height*0.5;
+
+                                exp_player.set_frame(ex);
+                                exp_player.SetRect(x_pos, y_pos);
+                                exp_player.Show(g_screen);
+                                SDL_RenderPresent(g_screen);
+                                SDL_Delay(50);
+
+
+                            }
+
+
+
+
                             p_player.RemoveBullet(m);
                             obj_threat->Free();
                             list_threats.erase(list_threats.begin() + t);
