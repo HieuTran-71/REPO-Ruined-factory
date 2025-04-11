@@ -44,6 +44,7 @@ public:
     void HandleBullet(SDL_Renderer* des);
     void RemoveBullet(const int& idx);
     void IncreaseSp(); // ktra tang so luong vat pham ho tro
+    void set_comeback_time(const int& cb_time) {come_back_time_ = cb_time;}
 
 private:
     int sp_count; // vat pham ho tro

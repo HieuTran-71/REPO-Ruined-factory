@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
     exp_player.set_clips();
 
     ExplosionOb exp_main;
-    bool mRet = exp_main.LoadImg("image/main_exp.png",g_screen);
+    bool mRet = exp_main.LoadImg("image/exp_bullet.png",g_screen);
     if (!mRet) return -1;
     exp_main.set_clips();
 
@@ -174,10 +174,10 @@ int main(int argc, char* argv[])
                 bool player_threat_Col = SDLCommonFunc::CheckCollision(rect_player, rect_threat);
                 if (player_threat_Col)
                 {
-                    for (int ex = 0 ; ex < 2; ex++)
+                    for (int ex = 0 ; ex < NUM_FRAME_EXP; ex++)
                     {
-                        int x_pos = p_player.GetRect().x - exp_main.get_frame_width() * 0.5;
-                        int y_pos = p_player.GetRect().y - exp_main.get_frame_height() * 0.5;
+                        int x_pos = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
+                        int y_pos = p_player.GetRect().y - exp_main.get_frame_height() * 0.25;
 
                         exp_main.set_frame(ex);
                         exp_main.SetRect(x_pos, y_pos);
@@ -185,13 +185,26 @@ int main(int argc, char* argv[])
                         SDL_RenderPresent(g_screen);
                         SDL_Delay(50);
                     }
-                    if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
+
+                    num_die++;
+                    if (num_die <= 3)
                     {
-                        p_threat->Free();
-                        close();
-                        SDL_Quit();
-                        return 0;
+                        p_player.SetRect(0,0);
+                        p_player.set_comeback_time(60);
+                        SDL_Delay(1000);
+                        continue;
                     }
+                    else
+                    {
+                        if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
+                        {
+                            p_threat->Free();
+                            close();
+                            SDL_Quit();
+                            return 0;
+                        }
+                    }
+
                 }
             }
         }
@@ -223,8 +236,8 @@ int main(int argc, char* argv[])
                         {
                             for (int ex = 0; ex < NUM_FRAME_EXP; ex++)
                             {
-                                int x_pos = p_bullet->GetRect().x - frame_exp_width*0.5;
-                                int y_pos = p_bullet->GetRect().y - frame_exp_height*0.5;
+                                int x_pos = p_bullet->GetRect().x - frame_exp_width*0.07;
+                                int y_pos = p_bullet->GetRect().y - frame_exp_height*0.25;
 
                                 exp_player.set_frame(ex);
                                 exp_player.SetRect(x_pos, y_pos);
