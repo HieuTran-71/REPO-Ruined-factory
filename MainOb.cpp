@@ -21,7 +21,7 @@ MainOb::MainOb()
     map_y_ = 0;
     jump_count_ = 0;
     come_back_time_ = 0;
-    sp_count = 0;
+    money_count = 0;
 }
 
 MainOb::~MainOb()
@@ -70,7 +70,7 @@ void MainOb::set_clips()
 
 void MainOb::IncreaseSp()
 {
-    sp_count++;
+    money_count++;
 }
 
 void MainOb::Show(SDL_Renderer* des, Map& map_data)

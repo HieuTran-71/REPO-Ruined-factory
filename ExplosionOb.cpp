@@ -19,7 +19,7 @@ bool ExplosionOb::LoadImg(std::string path, SDL_Renderer* screen)
 
     if (ret)
     {
-        frame_width_ = rect_.w / NUM_FRAME_EXP;
+        frame_width_ = 92;
         frame_height_ = rect_.h;
     }
 

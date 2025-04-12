@@ -10,7 +10,7 @@ public:
     TextOb();
     ~TextOb();
 
-    enum TextOb
+    enum TextObject
     {
         RED_TEXT = 0,
         WHITE_TEXT = 1,

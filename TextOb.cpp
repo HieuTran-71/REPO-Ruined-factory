@@ -16,7 +16,7 @@ TextOb::~TextOb()
 
 bool TextOb::LoadFromRenderText(TTF_Font* font, SDL_Renderer* screen)
 {
-    SDL_Surface* text_surface = TTF_RenderGlyph_Solid(font, str_val_.c_str(), text_color_);
+    SDL_Surface* text_surface = TTF_RenderText_Solid(font, str_val_.c_str(), text_color_);
     if (text_surface)
     {
         texture_ = SDL_CreateTextureFromSurface(screen, text_surface);
@@ -27,7 +27,7 @@ bool TextOb::LoadFromRenderText(TTF_Font* font, SDL_Renderer* screen)
     }
 
 
-    return texture_ != NULL
+    return texture_ != NULL;
 }
 
 void TextOb::Free()
@@ -57,7 +57,7 @@ void TextOb::SetColor(int type)
     {
         SDL_Color color = {255, 255 , 255};
         text_color_ = color;
-
+    }
     else if (type == BLACK_TEXT)
     {
         SDL_Color color = {0, 0 , 0};
@@ -67,10 +67,10 @@ void TextOb::SetColor(int type)
 
 void TextOb::RenderText(SDL_Renderer* screen,
                         int xp, int yp,
-                        SDL_Rect* clip = NULL,
-                        double angle=0.0,
-                        SDL_Point* center = NULL,
-                        SDL_RendererFlip filp = SDL_FLIP_NONE)
+                        SDL_Rect* clip ,
+                        double angle,
+                        SDL_Point* center ,
+                        SDL_RendererFlip flip )
 {
    SDL_Rect renderquad = {xp, yp, width_, height_};
    if (clip != NULL)

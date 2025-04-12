@@ -45,9 +45,9 @@ public:
     void RemoveBullet(const int& idx);
     void IncreaseSp(); // ktra tang so luong vat pham ho tro
     void set_comeback_time(const int& cb_time) {come_back_time_ = cb_time;}
-
+    int GetMoney() const {return money_count;}
 private:
-    int sp_count; // vat pham ho tro
+    int money_count; // vat pham ho tro
 
     std::vector<Bullet*> p_bullet_list_; //bang dan
 

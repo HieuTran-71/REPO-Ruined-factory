@@ -5,8 +5,11 @@
 #include "Timer.h"
 #include "ThreatOb.h"
 #include "ExplosionOb.h"
+#include "TextOb.h"
+#include "PlayPower.h"
 
 BaseObject g_background;
+TTF_Font* font_time;
 
 bool InitData()
 {
@@ -34,6 +37,17 @@ bool InitData()
             int imgFlags = IMG_INIT_PNG;
             if(!(IMG_Init(imgFlags) && imgFlags))
                 success = false;
+        }
+
+        if (TTF_Init()== -1)
+        {
+            success = false;
+        }
+
+        font_time = TTF_OpenFont("font/SFUFuturaBook.TTF", 15);
+        if (font_time == NULL)
+        {
+            success = false;
         }
     }
 
@@ -113,6 +127,14 @@ int main(int argc, char* argv[])
     p_player.LoadImg("image/move-R.png", g_screen);
     p_player.set_clips();
 
+
+    PlayPower player_power;
+    player_power.Init(g_screen);
+
+    PlayMoney player_money;
+    player_money.Init(g_screen);
+    player_money.SetPos(SCREEN_WIDTH*0.5 - 300, 8);
+
     std::vector<ThreatOb*> list_threats = MakeThreatList();
 
     ExplosionOb exp_player;
@@ -127,6 +149,16 @@ int main(int argc, char* argv[])
 
 
     int num_die = 0;
+
+    TextOb time_game;
+    time_game.SetColor(TextOb::WHITE_TEXT);
+
+    TextOb mark_game;
+    mark_game.SetColor(TextOb::WHITE_TEXT);
+    UINT mark_value = 0;
+
+    TextOb money_game;
+    money_game.SetColor(TextOb::WHITE_TEXT);
 
     bool is_quit = false;
     while (!is_quit) {
@@ -158,6 +190,9 @@ int main(int argc, char* argv[])
 
         game_map.SetMap(map_data);
         game_map.DrawMap(g_screen);
+
+        player_power.Show(g_screen);
+        player_money.Show(g_screen);
 
         for (int i = 0 ; i < list_threats.size(); i++)
         {
@@ -192,6 +227,8 @@ int main(int argc, char* argv[])
                         p_player.SetRect(0,0);
                         p_player.set_comeback_time(60);
                         SDL_Delay(1000);
+                        player_power.Decrease();
+                        player_power.Render(g_screen);
                         continue;
                     }
                     else
@@ -234,6 +271,7 @@ int main(int argc, char* argv[])
 
                         if (bCol1)
                         {
+                            mark_value++;
                             for (int ex = 0; ex < NUM_FRAME_EXP; ex++)
                             {
                                 int x_pos = p_bullet->GetRect().x - frame_exp_width*0.07;
@@ -259,6 +297,43 @@ int main(int argc, char* argv[])
                 }
             }
         }
+
+
+        std::string str_time = "Time: ";
+        Uint32 time_val = SDL_GetTicks() / 1000;
+        Uint32 val_time = 300 - time_val;
+        if (val_time <= 0)
+        {
+            if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
+            {
+                is_quit = true;
+                break;
+            }
+        }
+        else
+        {
+            std::string str_val = std::to_string(val_time);
+            str_time += str_val;
+
+            time_game.SetText(str_time);
+            time_game.LoadFromRenderText(font_time, g_screen);
+            time_game.RenderText(g_screen, SCREEN_WIDTH - 200, 15);
+        }
+
+        std::string val_str_mark = std::to_string(mark_value);
+        std::string strMark("Mark: ");
+        strMark += val_str_mark;
+
+        mark_game.SetText(strMark);
+        mark_game.LoadFromRenderText(font_time, g_screen);
+        mark_game.RenderText(g_screen, SCREEN_WIDTH*0.5 - 50, 15);
+
+        int money_count = p_player.GetMoney();
+        std::string money_str = std::to_string(money_count);
+
+        money_game.SetText(money_str);
+        money_game.LoadFromRenderText(font_time, g_screen);
+        money_game.RenderText(g_screen, SCREEN_WIDTH*0.5 - 50, 15);
 
         SDL_RenderPresent(g_screen);
 
