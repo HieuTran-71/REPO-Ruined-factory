@@ -46,7 +46,7 @@ bool InitData()
             success = false;
         }
 
-        font_time = TTF_OpenFont("font/SFUFuturaBook.TTF", 15);
+        font_time = TTF_OpenFont("font/SFUFuturaBook.TTF", 20);
         if (font_time == NULL)
         {
             success = false;
@@ -129,6 +129,7 @@ int main(int argc, char* argv[])
     game_map.LoadMap("map/map01.dat");
     game_map.LoadTiles(g_screen);
 
+    Map map_data = game_map.getMap();
 
     MainOb p_player;
     p_player.LoadImg("image/move-R.png", g_screen);
@@ -157,6 +158,13 @@ int main(int argc, char* argv[])
     mark_game.SetColor(TextOb::WHITE_TEXT);
     UINT mark_value = 0;
 
+    g_laserBeam.set_x_pos(0); // Bắt đầu từ bên trái màn hình
+    g_laserBeam.set_y_pos(0); // Trên cùng
+    g_laserBeam.set_is_active(true);
+
+    bool is_laser_active = false;
+    int player_moved_tiles = 0;
+    int initial_player_x = 0;
 
     bool is_quit = false;
     while (!is_quit) {
@@ -179,8 +187,6 @@ int main(int argc, char* argv[])
 
         game_map.DrawMap(g_screen);
 
-        Map map_data = game_map.getMap();
-
         p_player.HandleBullet(g_screen);
         p_player.SetMapXY(map_data.start_x_, map_data.start_y_);
         p_player.Do_Player(map_data);
@@ -190,6 +196,21 @@ int main(int argc, char* argv[])
         game_map.DrawMap(g_screen);
 
         player_money.Show(g_screen);
+
+        // Kiểm tra số ô đã di chuyển để kích hoạt laser
+        if (!is_laser_active) {
+            if (initial_player_x == 0) {
+                initial_player_x = p_player.GetRect().x / TILE_SIZE;
+            }
+            int current_player_x_tiles = p_player.GetRect().x / TILE_SIZE;
+            player_moved_tiles = std::abs(current_player_x_tiles - initial_player_x);
+            if (player_moved_tiles >= 5) {
+                is_laser_active = true;
+                g_laserBeam.set_x_pos(-g_laserBeam.get_width()); // Bắt đầu từ bên trái
+                g_laserBeam.set_y_pos(0); // Từ trên xuống
+                g_laserBeam.set_is_active(true);
+            }
+        }
 
         for (int i = 0 ; i < list_threats.size(); i++)
         {
@@ -299,6 +320,51 @@ int main(int argc, char* argv[])
         mark_game.SetText(strMark);
         mark_game.LoadFromRenderText(font_time, g_screen);
         mark_game.RenderText(g_screen, SCREEN_WIDTH*0.5 - 50, 15);
+
+
+        if (g_laserBeam.get_is_active()) {
+        // Lấy vị trí nhân vật
+        int player_x = p_player.GetRect().x;
+        int laser_x = g_laserBeam.get_x_pos();
+
+        // Di chuyển laser dần sang phải đuổi theo nhân vật
+        if (laser_x + g_laserBeam.get_width() < player_x) {
+            g_laserBeam.set_x_pos(laser_x + 4); // Tốc độ di chuyển laser
+        }
+
+        // Tạo vùng để scale laser cao bằng màn hình
+        SDL_Rect laser_rect;
+        laser_rect.x = g_laserBeam.get_x_pos();
+        laser_rect.y = 0;
+        laser_rect.w = g_laserBeam.get_width();
+        laser_rect.h = SCREEN_HEIGHT;
+
+        // Vẽ laser
+        g_laserBeam.Render(g_screen, &laser_rect);
+
+        // Kiểm tra va chạm với người chơi
+        SDL_Rect player_rect = p_player.GetRectFrame();
+        if (SDLCommonFunc::CheckCollision(laser_rect, player_rect)) {
+            // Hiệu ứng nổ
+            for (int ex = 0 ; ex < NUM_FRAME_EXP; ex++) {
+                int x_pos = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
+                int y_pos = p_player.GetRect().y - exp_main.get_frame_height() * 0.25;
+
+                exp_main.set_frame(ex);
+                exp_main.SetRect(x_pos, y_pos);
+                exp_main.Show(g_screen);
+                SDL_RenderPresent(g_screen);
+                SDL_Delay(50);
+            }
+
+            if (MessageBoxW(NULL, L"Bạn bị thiêu bởi laser đỏ!", L"Game Over", MB_OK | MB_ICONSTOP) == IDOK) {
+                close();
+                SDL_Quit();
+                return 0;
+            }
+        }
+    }
+
 
         SDL_RenderPresent(g_screen);
 
