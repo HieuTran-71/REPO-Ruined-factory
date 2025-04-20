@@ -7,8 +7,7 @@ LaserBeam::LaserBeam()
     y_pos_ = 0;
     width_ = 0;
     height_ = 0;
-    is_active_ = false;
-    scroll_speed_ = 2;
+    is_active_ = true;
     map_x_ = 0;
     map_y_ = 0;
 }
@@ -41,18 +40,17 @@ void LaserBeam::SetMapXY(int map_x, int map_y) {
 
 void LaserBeam::Update(const MainOb& player) {
     if (is_active_) {
-        x_pos_ += scroll_speed_;
-        // Theo dõi vị trí Y của nhân vật (có thể có offset)
-        y_pos_ = player.GetRect().y + player.GetRect().h / 2 - height_ / 2; // Giữa nhân vật
-
-        // Kiểm tra nếu tia laze đã đi hết màn hình (hoặc một khoảng nhất định)
-        if (x_pos_ > map_x_ + SCREEN_WIDTH) {
-            is_active_ = false; // Tắt tia laze khi đi hết
+        x_pos_ -= LASER_SPEED;
+        if (x_pos_ > SCREEN_WIDTH)
+        {
+            x_pos_ = 0;
         }
     }
 }
 
+
 SDL_Rect LaserBeam::GetRect() {
     return {x_pos_, y_pos_, width_, height_};
 }
+
 
