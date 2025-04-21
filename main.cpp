@@ -158,10 +158,6 @@ int main(int argc, char* argv[])
     mark_game.SetColor(TextOb::WHITE_TEXT);
     UINT mark_value = 0;
 
-    g_laserBeam.set_x_pos(0); // Bắt đầu từ bên trái màn hình
-    g_laserBeam.set_y_pos(0); // Trên cùng
-    g_laserBeam.set_is_active(true);
-
     bool is_laser_active = false;
     int player_moved_tiles = 0;
     int initial_player_x = 0;
@@ -212,7 +208,7 @@ int main(int argc, char* argv[])
 
         if (is_laser_active) {
 
-            g_laserBeam.Update(p_player);
+            g_laserBeam.Update();
             // Tạo vùng để scale laser cao bằng màn hình
 
             SDL_Rect laser_rect;
@@ -222,7 +218,7 @@ int main(int argc, char* argv[])
             laser_rect.h = SCREEN_HEIGHT;
 
             // Vẽ laser
-            g_laserBeam.Render(g_screen, &laser_rect);
+            SDL_RenderCopy(g_screen, g_laserBeam.GetObject(), NULL, &laser_rect);
 
             // Kiểm tra va chạm với người chơi
             SDL_Rect player_rect = p_player.GetRectFrame();

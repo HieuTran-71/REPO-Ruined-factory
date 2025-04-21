@@ -28,7 +28,7 @@ bool LaserBeam::LoadImg(const std::string& path, SDL_Renderer* screen) {
 
 void LaserBeam::Show(SDL_Renderer* screen) {
     if (is_active_) {
-        SDL_Rect renderRect = {x_pos_ - map_x_, y_pos_ - map_y_, width_, height_};
+        SDL_Rect renderRect = {x_pos_ , y_pos_ , width_, height_};
         Render(screen, &renderRect);
     }
 }
@@ -38,13 +38,16 @@ void LaserBeam::SetMapXY(int map_x, int map_y) {
     map_y_ = map_y;
 }
 
-void LaserBeam::Update(const MainOb& player) {
+void LaserBeam::Update() {
     if (is_active_) {
-        x_pos_ -= LASER_SPEED;
+        x_pos_ += LASER_SPEED;
         if (x_pos_ > SCREEN_WIDTH)
         {
             x_pos_ = 0;
         }
+
+        map_x_ = 0;
+        map_y_ = 0;
     }
 }
 

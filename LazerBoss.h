@@ -2,7 +2,7 @@
 #ifndef LAZERBOSS_H_
 #define LAZERBOSS_H_
 
-#define LASER_SPEED 1
+#define LASER_SPEED 2
 
 
 #include "CommonFunc.h"
@@ -18,7 +18,7 @@ public:
     bool LoadImg(const std::string& path, SDL_Renderer* screen);
     void Show(SDL_Renderer* screen);
     void SetMapXY(int map_x, int map_y);
-    void Update(const MainOb& player); // Cập nhật vị trí theo nhân vật
+    void Update();
 
     SDL_Rect GetRect();
 
