@@ -10,9 +10,7 @@ MainOb::MainOb()
     y_val_ = 0;
     width_frame_ = 0;
     height_frame_ = 0;
-    status_ = -1;
-    input_type_.right_ = 0;
-    input_type_.left_ =0;
+    status_ = Walk_Right;
     input_type_.jump_ = 0;
     input_type_.down_ = 0;
     input_type_.up_ = 0;
@@ -75,23 +73,9 @@ void MainOb::IncreaseSp()
 
 void MainOb::Show(SDL_Renderer* des, Map& map_data)
 {
-    if(status_ == Walk_Left)
-    {
-        LoadImg("image/move-L.png", des);
-    }
-    else
-    {
-        LoadImg("image/move-R.png", des);
-    }
+    LoadImg("image/move-R.png", des);
 
-    if (input_type_.left_ == 1 || input_type_.right_ == 1)
-    {
-        frame_++;
-    }
-    else
-    {
-        frame_ = 0;
-    }
+    frame_++;
 
     if (frame_ >= 16)
     {
@@ -118,17 +102,7 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
     {
         switch (events.key.keysym.sym)
         {
-        case SDLK_d:
-            status_ = Walk_Right;
-            input_type_.right_ = 1;
-            input_type_.left_ = 0;
-            break;
-        case SDLK_a:
-            status_ = Walk_Left;
-            input_type_.left_ = 1;
-            input_type_.right_ = 0;
-            break;
-        case SDLK_w:
+        case SDLK_SPACE:
             if (jump_count_ < max_jump_)
             {
                 y_val_ = -PLAYER_JUMP_VAL;  // Nhảy lên
@@ -142,13 +116,7 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
     {
         switch (events.key.keysym.sym)
         {
-        case SDLK_d:
-            input_type_.right_ = 0;
-            break;
-        case SDLK_a:
-            input_type_.left_ = 0;
-            break;
-         case SDLK_w:
+         case SDLK_SPACE:
             input_type_.jump_ = 0;
             break;
         }
@@ -156,7 +124,7 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
 
     if (events.type == SDL_KEYDOWN)
     {
-        if (events.key.keysym.sym == SDLK_w)
+        if (events.key.keysym.sym == SDLK_SPACE)
         {
             if (on_ground_)   // Chỉ cho phép nhảy khi đang đứng trên đất
             {
@@ -167,15 +135,15 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
 
     if (events.type == SDL_KEYUP)
     {
-        if (events.key.keysym.sym == SDLK_w)
+        if (events.key.keysym.sym == SDLK_SPACE)
         {
             input_type_.jump_ = 0; // Reset trạng thái nhảy khi nhả phím
         }
     }
 
-    if (events.type == SDL_KEYDOWN)
+    if (events.type == SDL_MOUSEBUTTONDOWN)
     {
-        if (events.key.keysym.sym == SDLK_j)
+        if (events.button.button == SDL_BUTTON_LEFT)
         {
 
             Bullet* p_bullet = new Bullet(); //tao ra vien dan
@@ -251,7 +219,7 @@ void MainOb::Do_Player(Map& map_data)
 {
     if (come_back_time_ == 0)
     {
-        x_val_ = 0;
+        x_val_ = PLAYER_SPEED;
         y_val_ += GRAVITY;
 
         if (y_val_ >= MAX_FALL_SPEED)
@@ -259,14 +227,6 @@ void MainOb::Do_Player(Map& map_data)
             y_val_ = MAX_FALL_SPEED;
         }
 
-        if (input_type_.left_ == 1)
-        {
-            x_val_ -= PLAYER_SPEED;
-        }
-        else if (input_type_.right_ == 1)
-        {
-            x_val_ += PLAYER_SPEED;
-        }
 
         if (input_type_.jump_ == 1 && on_ground_)
         {
@@ -278,32 +238,13 @@ void MainOb::Do_Player(Map& map_data)
         CenterEntityOnMap(map_data);
     }
 
-    if (come_back_time_ > 0)
-    {
-        come_back_time_--;
-        if (come_back_time_ == 0)
-        {
-            if (x_pos_ > 192)
-            {
-                x_pos_-= 192; // 4 tile map
-                map_x_ -= 192;
-            }
-            else
-            {
-                x_pos_ = 0;
-            }
-            y_pos_ = 0;
-            x_val_ = 0;
-            y_val_ = 0;
 
-        }
-    }
 
 }
 
 void MainOb::CenterEntityOnMap(Map& map_data)
 {
-    map_data.start_x_ = x_pos_ - (SCREEN_WIDTH/2);
+    map_data.start_x_ = x_pos_ - (SCREEN_WIDTH/4);
     if (map_data.start_x_ < 0)
     {
         map_data.start_x_ = 0;
@@ -313,7 +254,7 @@ void MainOb::CenterEntityOnMap(Map& map_data)
         map_data.start_x_ = map_data.max_x_ - SCREEN_WIDTH;
     }
 
-    map_data.start_y_ = y_pos_ - (SCREEN_HEIGHT/2);
+    map_data.start_y_ = y_pos_ - (SCREEN_HEIGHT/4);
     if (map_data.start_y_ < 0)
     {
         map_data.start_y_ = 0;
@@ -442,9 +383,5 @@ void MainOb::CheckToMap(Map& map_data)
         x_pos_ = map_data.max_x_ - width_frame_;
     }
 
-    if (y_pos_ > map_data.max_y_)
-    {
-        come_back_time_ = 50;
-    }
 
 }

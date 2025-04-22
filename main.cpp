@@ -7,11 +7,9 @@
 #include "ExplosionOb.h"
 #include "TextOb.h"
 #include "PlayPower.h"
-#include "LazerBoss.h"
 
 BaseObject g_background;
 TTF_Font* font_time;
-LaserBeam g_laserBeam;
 
 bool InitData()
 {
@@ -51,10 +49,6 @@ bool InitData()
         {
             success = false;
         }
-        if (!g_laserBeam.LoadImg("image/laser_beam.png", g_screen))
-        {
-            success = false;
-        }
     }
 
     return success;
@@ -72,7 +66,6 @@ bool LoadBackground()
 void close()
 {
     g_background.Free();
-    g_laserBeam.Free();
 
     SDL_DestroyRenderer(g_screen);
     g_screen = NULL;
@@ -158,10 +151,6 @@ int main(int argc, char* argv[])
     mark_game.SetColor(TextOb::WHITE_TEXT);
     UINT mark_value = 0;
 
-    bool is_laser_active = false;
-    int player_moved_tiles = 0;
-    int initial_player_x = 0;
-
     bool is_quit = false;
     while (!is_quit) {
         fps_timer.start();
@@ -188,60 +177,23 @@ int main(int argc, char* argv[])
         p_player.Do_Player(map_data);
         p_player.Show(g_screen, map_data);
 
+        // Kiểm tra nếu nhân vật rơi xuống vực
+        if (p_player.GetRect().y > map_data.max_y_) {
+            if (MessageBoxW(NULL, L"Bạn đã rơi xuống vực!", L"Game Over", MB_OK | MB_ICONSTOP) == IDOK) {
+                close();
+                SDL_Quit();
+                return 0;
+            }
+        }
+
         game_map.SetMap(map_data);
         game_map.DrawMap(g_screen);
 
+
+
+
         player_money.Show(g_screen);
 
-        // Kiểm tra số ô đã di chuyển để kích hoạt laser
-        if (!is_laser_active) {
-            if (initial_player_x == 0) {
-                initial_player_x = p_player.GetRect().x / TILE_SIZE;
-            }
-            int current_player_x_tiles = p_player.GetRect().x / TILE_SIZE;
-            player_moved_tiles = std::abs(current_player_x_tiles - initial_player_x);
-            if (player_moved_tiles >= 5) {
-                is_laser_active = true;
-            }
-        }
-
-
-        if (is_laser_active) {
-
-            g_laserBeam.Update();
-            // Tạo vùng để scale laser cao bằng màn hình
-
-            SDL_Rect laser_rect;
-            laser_rect.x = g_laserBeam.get_x_pos();
-            laser_rect.y = 0;
-            laser_rect.w = g_laserBeam.get_width();
-            laser_rect.h = SCREEN_HEIGHT;
-
-            // Vẽ laser
-            SDL_RenderCopy(g_screen, g_laserBeam.GetObject(), NULL, &laser_rect);
-
-            // Kiểm tra va chạm với người chơi
-            SDL_Rect player_rect = p_player.GetRectFrame();
-            if (SDLCommonFunc::CheckCollision(laser_rect, player_rect)) {
-                // Hiệu ứng nổ
-                for (int ex = 0 ; ex < NUM_FRAME_EXP; ex++) {
-                    int x_pos = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
-                    int y_pos = p_player.GetRect().y - exp_main.get_frame_height() * 0.25;
-
-                    exp_main.set_frame(ex);
-                    exp_main.SetRect(x_pos, y_pos);
-                    exp_main.Show(g_screen);
-                    SDL_RenderPresent(g_screen);
-                    SDL_Delay(50);
-                }
-
-                if (MessageBoxW(NULL, L"Bạn bị thiêu bởi laser đỏ!", L"Game Over", MB_OK | MB_ICONSTOP) == IDOK) {
-                    close();
-                    SDL_Quit();
-                    return 0;
-                }
-            }
-        }
 
         for (int i = 0 ; i < list_threats.size(); i++)
         {
@@ -280,6 +232,7 @@ int main(int argc, char* argv[])
                 }
             }
         }
+
 
         int frame_exp_width = exp_player.get_frame_width();
         int frame_exp_height = exp_player.get_frame_height();
@@ -351,6 +304,7 @@ int main(int argc, char* argv[])
         mark_game.SetText(strMark);
         mark_game.LoadFromRenderText(font_time, g_screen);
         mark_game.RenderText(g_screen, SCREEN_WIDTH*0.5 - 50, 15);
+
 
         SDL_RenderPresent(g_screen);
 

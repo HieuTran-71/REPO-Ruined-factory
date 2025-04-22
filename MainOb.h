@@ -9,7 +9,7 @@
 
 #define GRAVITY_SPEED 0.8 //toc do roi
 #define MAX_FALL_SPEED 10 //toc do roi toi da
-#define PLAYER_SPEED 8 // toc do nhan vat
+#define PLAYER_SPEED 6 // toc do nhan vat
 #define PLAYER_JUMP_VAL 15
 #define GRAVITY 0.8
 
