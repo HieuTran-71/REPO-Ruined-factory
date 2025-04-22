@@ -174,21 +174,22 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
 
 }
 
-void MainOb::HandleBullet(SDL_Renderer* des)
+void MainOb::HandleBullet(SDL_Renderer* des, const Map& map_data, SDL_Renderer* screen, ExplosionOb* exp_bullet)
 {
-    for (int i = 0 ; i < p_bullet_list_.size(); i++)
+    for (size_t i = 0 ; i < p_bullet_list_.size(); i++)
     {
         Bullet* p_bullet = p_bullet_list_.at(i);
         if (p_bullet != NULL)
         {
              if (p_bullet->get_is_move() == true)
             {
-                p_bullet->HandleMove(SCREEN_WIDTH, SCREEN_HEIGHT);
+                p_bullet->HandleMove(SCREEN_WIDTH, SCREEN_HEIGHT, map_data, g_screen, exp_bullet);
                 p_bullet->Render(des);
             }
             else
             {
                 p_bullet_list_.erase(p_bullet_list_.begin() + i);
+                i--;
                 if (p_bullet != NULL)
                 {
                     delete p_bullet;

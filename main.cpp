@@ -144,6 +144,11 @@ int main(int argc, char* argv[])
     if (!mRet) return -1;
     exp_main.set_clips();
 
+    ExplosionOb exp_bullet_tile;
+    bool bRet = exp_bullet_tile.LoadImg("image/exp_bullet.png",g_screen);
+    if (!bRet) return -1;
+    exp_bullet_tile.set_clips();
+
     TextOb time_game;
     time_game.SetColor(TextOb::WHITE_TEXT);
 
@@ -172,7 +177,7 @@ int main(int argc, char* argv[])
 
         game_map.DrawMap(g_screen);
 
-        p_player.HandleBullet(g_screen);
+        p_player.HandleBullet(g_screen, map_data, g_screen, &exp_bullet_tile);
         p_player.SetMapXY(map_data.start_x_, map_data.start_y_);
         p_player.Do_Player(map_data);
         p_player.Show(g_screen, map_data);
@@ -242,10 +247,20 @@ int main(int argc, char* argv[])
             Bullet* p_bullet = bullet_arr.at(m);
             if (p_bullet != NULL)
             {
+                // Gọi kiểm tra va chạm với tile
+                p_bullet->HandleMove(SCREEN_WIDTH, SCREEN_HEIGHT, map_data, g_screen, &exp_player);
+
+                if (!p_bullet->get_is_move())
+                {
+                    p_player.RemoveBullet(m);
+                    continue;
+                }
+
+                // Kiểm tra va chạm với threat
                 for (int t = 0 ; t < list_threats.size(); t++)
                 {
                     ThreatOb* obj_threat = list_threats.at(t);
-                     if (obj_threat != NULL)
+                    if (obj_threat != NULL)
                     {
                         SDL_Rect tRect;
                         tRect.x = obj_threat->GetRect().x;
@@ -270,18 +285,18 @@ int main(int argc, char* argv[])
                                 exp_player.Show(g_screen);
                                 SDL_RenderPresent(g_screen);
                                 SDL_Delay(50);
-
-
                             }
 
                             p_player.RemoveBullet(m);
                             obj_threat->Free();
                             list_threats.erase(list_threats.begin() + t);
+                            break;
                         }
                     }
                 }
             }
         }
+
 
 
         std::string str_time = "Time: ";

@@ -41,7 +41,7 @@ public:
         p_bullet_list_ = bullet_list;
     }
     std::vector<Bullet*> get_bullet_list() const {return p_bullet_list_;}
-    void HandleBullet(SDL_Renderer* des);
+    void HandleBullet(SDL_Renderer* des, const Map& map_data, SDL_Renderer* screen, ExplosionOb* exp_bullet);
     void RemoveBullet(const int& idx);
     void IncreaseSp(); // ktra tang so luong vat pham ho tro
     void set_comeback_time(const int& cb_time) {come_back_time_ = cb_time;}
