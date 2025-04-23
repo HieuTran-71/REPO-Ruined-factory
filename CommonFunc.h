@@ -27,7 +27,6 @@ const int COLOR_KEY_B = 180;
 
 const int RENDER_DRAW_COLOR = 0xff;
 
-#define BLANK_TILE 0
 #define TILE_SIZE 64
 
 #define MAX_MAP_X 400
@@ -45,8 +44,6 @@ typedef struct Input
 };
 
 
-
-
 typedef struct Map
 {
     int start_x_;
@@ -57,6 +54,32 @@ typedef struct Map
 
     int tile[MAX_MAP_Y][MAX_MAP_X];
     char* file_name;
+};
+
+
+enum TileType
+{
+    TILE_TYPE_BLANK = 0,
+    TILE_TYPE_SOLID = 1,
+    TILE_TYPE_WATER = 2,
+    TILE_TYPE_SPIKE = 3,
+
+};
+
+const int MAX_TILES = 10;
+
+static const int tile_type_mapping[MAX_TILES] =
+{
+    TILE_TYPE_BLANK, //0
+    TILE_TYPE_SOLID, //1
+    TILE_TYPE_SOLID, //2
+    TILE_TYPE_SOLID, //3
+    TILE_TYPE_BLANK, //4
+    TILE_TYPE_SOLID, //5
+    TILE_TYPE_SOLID, //6
+    TILE_TYPE_SOLID, //7
+    TILE_TYPE_SOLID, //8
+    TILE_TYPE_SOLID, //9
 };
 
 

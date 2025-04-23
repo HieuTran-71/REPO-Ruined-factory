@@ -224,7 +224,6 @@ int main(int argc, char* argv[])
                         exp_main.SetRect(x_pos, y_pos);
                         exp_main.Show(g_screen);
                         SDL_RenderPresent(g_screen);
-                        SDL_Delay(50);
                     }
 
                     if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
@@ -284,7 +283,7 @@ int main(int argc, char* argv[])
                                 exp_player.SetRect(x_pos, y_pos);
                                 exp_player.Show(g_screen);
                                 SDL_RenderPresent(g_screen);
-                                SDL_Delay(50);
+
                             }
 
                             p_player.RemoveBullet(m);

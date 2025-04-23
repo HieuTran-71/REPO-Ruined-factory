@@ -300,7 +300,7 @@ void MainOb::CheckToMap(Map& map_data)
             }
             else
             {
-                if (val1 != BLANK_TILE || val2 != BLANK_TILE)
+                if (val1 != TILE_TYPE_BLANK || val2 != TILE_TYPE_BLANK)
                 {
                     x_pos_ = x2 * TILE_SIZE - width_frame_; // Căn nhân vật vào sát mép trái tile
                     x_val_ = 0;
@@ -321,7 +321,7 @@ void MainOb::CheckToMap(Map& map_data)
             }
             else
             {
-                if (val1 != BLANK_TILE || val2 != BLANK_TILE)
+                if (val1 != TILE_TYPE_BLANK || val2 != TILE_TYPE_BLANK)
                 {
                     x_pos_ = (x1 + 1) * TILE_SIZE; // Đặt nhân vật ở mép phải tile
                     x_val_ = 0;
@@ -355,7 +355,7 @@ void MainOb::CheckToMap(Map& map_data)
             }
             else
             {
-                if (val1 != BLANK_TILE || val2 != BLANK_TILE)
+                if (val1 != TILE_TYPE_BLANK || val2 != TILE_TYPE_BLANK)
                 {
                     y_pos_ = y2 * TILE_SIZE - height_frame_; // Căn nhân vật lên trên tile
                     y_val_ = 0;

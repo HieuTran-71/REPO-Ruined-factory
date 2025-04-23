@@ -125,7 +125,7 @@ void ThreatOb::CheckToMap(Map& gMap)
 
             int val1 = gMap.tile[y1][x2];
             int val2 = gMap.tile[y2][x2];
-            if ((val1 != BLANK_TILE && val1 != STATE_SUPPORT)||(val2 != STATE_SUPPORT && val2 != BLANK_TILE))
+            if ((val1 != TILE_TYPE_BLANK && val1 != STATE_SUPPORT)||(val2 != STATE_SUPPORT && val2 != TILE_TYPE_BLANK))
             {
                 x_pos_ = x2 * TILE_SIZE - width_frame_;
                 x_val_ = 0;
@@ -137,7 +137,7 @@ void ThreatOb::CheckToMap(Map& gMap)
         {
             int val1 = gMap.tile[y1][x1];
             int val2 = gMap.tile[y2][x1];
-            if ((val1 != BLANK_TILE && val1 != STATE_SUPPORT)||(val2 != STATE_SUPPORT && val2 != BLANK_TILE))
+            if ((val1 != TILE_TYPE_BLANK && val1 != STATE_SUPPORT)||(val2 != STATE_SUPPORT && val2 != TILE_TYPE_BLANK))
             {
                 x_pos_ = (x1 + 1) * TILE_SIZE;
                 x_val_ = 0;
@@ -161,7 +161,7 @@ void ThreatOb::CheckToMap(Map& gMap)
             int val1 = gMap.tile[y2][x1];
             int val2 = gMap.tile[y2][x2];
 
-            if ((val1 != BLANK_TILE && val1 != STATE_SUPPORT)||(val2 != STATE_SUPPORT && val2 != BLANK_TILE))
+            if ((val1 != TILE_TYPE_BLANK && val1 != STATE_SUPPORT)||(val2 != STATE_SUPPORT && val2 != TILE_TYPE_BLANK))
             {
                 y_pos_ = y2 * TILE_SIZE - height_frame_;
                 y_val_ = 0;
@@ -178,7 +178,7 @@ void ThreatOb::CheckToMap(Map& gMap)
             int val1 = gMap.tile[y1][x1];
             int val2 = gMap.tile[y1][x2];
 
-            if ((val1 != BLANK_TILE && val1 != STATE_SUPPORT)||(val2 != STATE_SUPPORT && val2 != BLANK_TILE))
+            if ((val1 != TILE_TYPE_BLANK && val1 != STATE_SUPPORT)||(val2 != STATE_SUPPORT && val2 != TILE_TYPE_BLANK))
             {
                 y_pos_ = (y1 + 1) * TILE_SIZE;
                 y_val_ = 0;

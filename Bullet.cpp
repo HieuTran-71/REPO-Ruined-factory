@@ -57,31 +57,37 @@ void Bullet::HandleMove(const int& x_border, const int& y_border, const Map& map
     {
         for (int x = start_x; x < end_x; x++)
         {
-            if (map_data.tile[y][x] != BLANK_TILE)
+            int tile_value = map_data.tile[y][x];
+
+            if (tile_value > 0 && tile_value < MAX_TILES )
             {
-                SDL_Rect tile_rect;
-                tile_rect.x = x * TILE_SIZE;
-                tile_rect.y = y * TILE_SIZE;
-                tile_rect.w = TILE_SIZE;
-                tile_rect.h = TILE_SIZE;
+                int tile_type = tile_type_mapping[tile_value];
 
-                if (SDLCommonFunc::CheckCollision(bullet_rect, tile_rect))
+                if (tile_type == TILE_TYPE_SOLID)
                 {
-                    // Hiệu ứng nổ
-                    for (int ex = 0; ex < NUM_FRAME_EXP; ex++)
+                    SDL_Rect tile_rect;
+                    tile_rect.x = x * TILE_SIZE;
+                    tile_rect.y = y * TILE_SIZE;
+                    tile_rect.w = TILE_SIZE;
+                    tile_rect.h = TILE_SIZE;
+
+                    if (SDLCommonFunc::CheckCollision(bullet_rect, tile_rect))
                     {
-                        int x_pos = rect_.x - exp_bullet->get_frame_width() * 0.07;
-                        int y_pos = rect_.y - exp_bullet->get_frame_height() * 0.25;
+                        // Hiệu ứng nổ
+                        for (int ex = 0; ex < NUM_FRAME_EXP; ex++)
+                        {
+                            int x_pos = rect_.x - exp_bullet->get_frame_width() * 0.07;
+                            int y_pos = rect_.y - exp_bullet->get_frame_height() * 0.25;
 
-                        exp_bullet->set_frame(ex);
-                        exp_bullet->SetRect(x_pos, y_pos);
-                        exp_bullet->Show(screen);
-                        SDL_RenderPresent(screen);
-                        SDL_Delay(20);
+                            exp_bullet->set_frame(ex);
+                            exp_bullet->SetRect(x_pos, y_pos);
+                            exp_bullet->Show(screen);
+                            SDL_RenderPresent(screen);
+                        }
+
+                        is_move_ = false;
+                        return;
                     }
-
-                    is_move_ = false;
-                    return;
                 }
             }
         }
