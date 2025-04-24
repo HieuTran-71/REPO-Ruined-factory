@@ -11,6 +11,8 @@
 BaseObject g_background;
 TTF_Font* font_time;
 
+
+
 bool InitData()
 {
     bool success = true;
@@ -78,33 +80,55 @@ void close()
 }
 
 
-std::vector<ThreatOb*> MakeThreatList()
+std::vector<ThreatOb*> MakeThreatList(Map& map_data)
 {
     std::vector<ThreatOb*> list_threats;
 
-    ThreatOb* dynamic_threats = new ThreatOb[20];
-    for (int i = 0 ; i < 20 ; i++)
+    for (int y = 0; y < MAX_MAP_Y; ++y)
     {
-        ThreatOb* p_threat = dynamic_threats + i;
-        if (p_threat != NULL)
+        for (int x = 0; x < MAX_MAP_X; ++x)
         {
-            p_threat->LoadImg("image/threat_Lv1_L .png", g_screen);
-            p_threat->set_clips();
-            p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
-            p_threat->set_x_pos(1000 + i*1000);
-            p_threat->set_y_pos(200);
+            int val = map_data.tile[y][x];
 
-            int pos1 = p_threat->get_x_pos() - 200;
-            int pos2 = p_threat->get_x_pos() + 200;
-            p_threat->SetAnimation(pos1,pos2);
-            p_threat->set_input_left(1);
-            list_threats.push_back(p_threat);
+            if (val == 6)
+            {
+                ThreatOb* p_threat = new ThreatOb();
+                if (p_threat != nullptr)
+                {
+                    p_threat->LoadImg("image/threat_Lv1_L .png", g_screen);
+                    p_threat->set_clips();
+                    p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
+
+                    int pos_x = x * TILE_SIZE;
+                    int pos_y = y * TILE_SIZE;
+
+                    p_threat->set_x_pos(pos_x);
+                    p_threat->set_y_pos(pos_y);
+
+                    int pos1 = pos_x - 200;
+                    int pos2 = pos_x + 200;
+                    p_threat->SetAnimation(pos1, pos2);
+                    p_threat->set_input_left(1);
+
+                    list_threats.push_back(p_threat);
+                }
+
+                map_data.tile[y][x] = 0;
+            }
         }
     }
 
     return list_threats;
 }
 
+struct ExplosionInfo {
+    int x, y;
+    int current_frame;
+    bool from_bullet;  // true = từ đạn, false = từ player
+    ImpTimer timer;
+};
+
+std::vector<ExplosionInfo> active_explosions;
 
 int main(int argc, char* argv[])
 {
@@ -132,7 +156,7 @@ int main(int argc, char* argv[])
     player_money.Init(g_screen);
     player_money.SetPos(SCREEN_WIDTH*0.5 - 300, 8);
 
-    std::vector<ThreatOb*> list_threats = MakeThreatList();
+    std::vector<ThreatOb*> list_threats = MakeThreatList(map_data);
 
     ExplosionOb exp_player;
     bool tRet = exp_player.LoadImg("image/exp_bullet.png", g_screen);
@@ -215,16 +239,14 @@ int main(int argc, char* argv[])
                 bool player_threat_Col = SDLCommonFunc::CheckCollision(rect_player, rect_threat);
                 if (player_threat_Col)
                 {
-                    for (int ex = 0 ; ex < NUM_FRAME_EXP; ex++)
-                    {
-                        int x_pos = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
-                        int y_pos = p_player.GetRect().y - exp_main.get_frame_height() * 0.25;
+                    ExplosionInfo exp;
+                    exp.x = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
+                    exp.y = p_player.GetRect().y - exp_main.get_frame_height() * 0.25;
+                    exp.current_frame = 0;
+                    exp.from_bullet = false;
+                    exp.timer.start();
+                    active_explosions.push_back(exp);
 
-                        exp_main.set_frame(ex);
-                        exp_main.SetRect(x_pos, y_pos);
-                        exp_main.Show(g_screen);
-                        SDL_RenderPresent(g_screen);
-                    }
 
                     if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
                     {
@@ -246,45 +268,87 @@ int main(int argc, char* argv[])
             Bullet* p_bullet = bullet_arr.at(m);
             if (p_bullet != NULL)
             {
-                // Gọi kiểm tra va chạm với tile
-                p_bullet->HandleMove(SCREEN_WIDTH, SCREEN_HEIGHT, map_data, g_screen, &exp_player);
+                SDL_Rect bRect = p_bullet->GetRect();
 
-                if (!p_bullet->get_is_move())
+                // Tọa độ thật của viên đạn trên bản đồ (chưa trừ offset khi render)
+                int real_x = bRect.x + map_data.start_x_;
+                int real_y = bRect.y + map_data.start_y_;
+
+                // Lấy phạm vi tile xung quanh viên đạn
+                int start_x = real_x / TILE_SIZE;
+                int end_x = (real_x + bRect.w - 1) / TILE_SIZE;
+                int start_y = real_y / TILE_SIZE;
+                int end_y = (real_y + bRect.h - 1) / TILE_SIZE;
+
+                // Giới hạn trong bản đồ
+                start_x = std::max(0, start_x);
+                end_x = std::min(MAX_MAP_X - 1, end_x);
+                start_y = std::max(0, start_y);
+                end_y = std::min(MAX_MAP_Y - 1, end_y);
+
+                bool hit_tile = false;
+
+                for (int y = start_y; y <= end_y; y++)
                 {
-                    p_player.RemoveBullet(m);
-                    continue;
+                    for (int x = start_x; x <= end_x; x++)
+                    {
+                        int tile_value = map_data.tile[y][x];
+
+                        if (tile_value > 0 && tile_value < MAX_TILES)
+                        {
+                            int tile_type = tile_type_mapping[tile_value];
+
+                            if (tile_type == TILE_TYPE_SOLID)
+                            {
+                                SDL_Rect tile_rect;
+                                tile_rect.x = x * TILE_SIZE - map_data.start_x_;
+                                tile_rect.y = y * TILE_SIZE - map_data.start_y_;
+                                tile_rect.w = TILE_SIZE;
+                                tile_rect.h = TILE_SIZE;
+
+                                if (SDLCommonFunc::CheckCollision(bRect, tile_rect))
+                                {
+                                    ExplosionInfo exp;
+                                    exp.x = bRect.x - frame_exp_width * 0.07;
+                                    exp.y = bRect.y - frame_exp_height * 0.25;
+                                    exp.current_frame = 0;
+                                    exp.from_bullet = true;
+                                    exp.timer.start();
+                                    active_explosions.push_back(exp);
+
+
+                                    p_bullet->set_is_move(false);
+                                    hit_tile = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (hit_tile) break;
                 }
 
-                // Kiểm tra va chạm với threat
+
+
                 for (int t = 0 ; t < list_threats.size(); t++)
                 {
                     ThreatOb* obj_threat = list_threats.at(t);
                     if (obj_threat != NULL)
                     {
-                        SDL_Rect tRect;
-                        tRect.x = obj_threat->GetRect().x;
-                        tRect.y = obj_threat->GetRect().y;
-                        tRect.w = obj_threat->get_width_frame();
-                        tRect.h = obj_threat->get_height_frame();
-
-                        SDL_Rect bRect = p_bullet->GetRect();
+                        SDL_Rect tRect = obj_threat->GetRect();
 
                         bool bCol1 = SDLCommonFunc::CheckCollision(bRect, tRect);
 
                         if (bCol1)
                         {
                             mark_value++;
-                            for (int ex = 0; ex < NUM_FRAME_EXP; ex++)
-                            {
-                                int x_pos = p_bullet->GetRect().x - frame_exp_width*0.07;
-                                int y_pos = p_bullet->GetRect().y - frame_exp_height*0.25;
-
-                                exp_player.set_frame(ex);
-                                exp_player.SetRect(x_pos, y_pos);
-                                exp_player.Show(g_screen);
-                                SDL_RenderPresent(g_screen);
-
-                            }
+                            ExplosionInfo exp;
+                            exp.x = p_bullet->GetRect().x - frame_exp_width * 0.07;
+                            exp.y = p_bullet->GetRect().y - frame_exp_height * 0.25;
+                            exp.current_frame = 0;
+                            exp.from_bullet = true;
+                            exp.timer.start();
+                            active_explosions.push_back(exp);
 
                             p_player.RemoveBullet(m);
                             obj_threat->Free();
@@ -318,6 +382,37 @@ int main(int argc, char* argv[])
         mark_game.SetText(strMark);
         mark_game.LoadFromRenderText(font_time, g_screen);
         mark_game.RenderText(g_screen, SCREEN_WIDTH*0.5 - 50, 15);
+
+        for (int i = 0; i < active_explosions.size(); )
+        {
+            ExplosionInfo& exp = active_explosions[i];
+            int frame_duration = 40; // 40ms mỗi frame
+            int ticks = exp.timer.get_ticks();
+            int frame_idx = ticks / frame_duration;
+
+            if (frame_idx >= NUM_FRAME_EXP)
+            {
+                active_explosions.erase(active_explosions.begin() + i);
+            }
+            else
+            {
+                if (exp.from_bullet)
+                {
+                    exp_bullet_tile.set_frame(frame_idx);
+                    exp_bullet_tile.SetRect(exp.x, exp.y);
+                    exp_bullet_tile.Show(g_screen);
+                }
+                else
+                {
+                    exp_main.set_frame(frame_idx);
+                    exp_main.SetRect(exp.x, exp.y);
+                    exp_main.Show(g_screen);
+                }
+
+                ++i;
+            }
+        }
+
 
 
         SDL_RenderPresent(g_screen);

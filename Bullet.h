@@ -37,7 +37,7 @@ public:
 
     void set_bullet_dir(const unsigned int& bulletDir) {bullet_dir_ = bulletDir;}
     unsigned int get_bullet_dir() const {return bullet_dir_;}
-    void HandleMove(const int& x_border, const int& y_border, const Map& map_data, SDL_Renderer* screen, ExplosionOb* exp_bullet);
+    void HandleMove(const int& x_border, const int& y_border);
 
     void set_bullet_type(const unsigned int& bulletType) {bullet_type_ = bulletType;}
     unsigned int get_bullet_type() const {return bullet_type_;}

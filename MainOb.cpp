@@ -164,8 +164,8 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
             }
 
 
-            p_bullet->set_x_val(20); // toc do di chuyen cua dan
-            p_bullet->set_y_val(20);
+            p_bullet->set_x_val(15); // toc do di chuyen cua dan
+            p_bullet->set_y_val(15);
             p_bullet->set_is_move(true);
 
             p_bullet_list_.push_back(p_bullet);
@@ -183,7 +183,7 @@ void MainOb::HandleBullet(SDL_Renderer* des, const Map& map_data, SDL_Renderer* 
         {
              if (p_bullet->get_is_move() == true)
             {
-                p_bullet->HandleMove(SCREEN_WIDTH, SCREEN_HEIGHT, map_data, g_screen, exp_bullet);
+                p_bullet->HandleMove(SCREEN_WIDTH, SCREEN_HEIGHT);
                 p_bullet->Render(des);
             }
             else

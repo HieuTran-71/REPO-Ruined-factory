@@ -2,17 +2,21 @@
 
 bool SDLCommonFunc::CheckCollision(const SDL_Rect& object1, const SDL_Rect& object2)
 {
+    int left_a = object1.x;
+    int right_a = object1.x + object1.w;
+    int top_a = object1.y;
+    int bottom_a = object1.y + object1.h;
 
-    // Kiểm tra các trường hợp không va chạm
-    if (object1.x + object1.w <= object2.x ||  // object1 nằm hoàn toàn bên trái object2
-        object1.x >= object2.x + object2.w ||  // object1 nằm hoàn toàn bên phải object2
-        object1.y + object1.h <= object2.y ||  // object1 nằm hoàn toàn phía trên object2
-        object1.y >= object2.y + object2.h)    // object1 nằm hoàn toàn phía dưới object2
-    {
-        return false; // Không có va chạm
+    int left_b = object2.x;
+    int right_b = object2.x + object2.w;
+    int top_b = object2.y;
+    int bottom_b = object2.y + object2.h;
+
+
+    if (left_a >= right_b || right_a <= left_b || top_a >= bottom_b || bottom_a <= top_b) {
+        return false;
     }
 
-    // Nếu không rơi vào bất kỳ trường hợp nào ở trên, nghĩa là có va chạm
     return true;
 }
 
