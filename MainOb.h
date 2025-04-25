@@ -5,6 +5,7 @@
 #include "BaseObject.h"
 #include "CommonFunc.h"
 #include "Bullet.h"
+#include "SoundManager.h"
 
 
 #define GRAVITY_SPEED 0.8 //toc do roi
@@ -46,6 +47,7 @@ public:
     void IncreaseSp(); // ktra tang so luong vat pham ho tro
     void set_comeback_time(const int& cb_time) {come_back_time_ = cb_time;}
     int GetMoney() const {return money_count;}
+
 private:
     int money_count; // vat pham ho tro
 

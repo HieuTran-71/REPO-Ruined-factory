@@ -7,16 +7,17 @@
 #include "ExplosionOb.h"
 #include "TextOb.h"
 #include "PlayPower.h"
+#include "SoundManager.h"
 
 BaseObject g_background;
 TTF_Font* font_time;
-
+SoundManager* g_sound_manager = nullptr;
 
 
 bool InitData()
 {
     bool success = true;
-    int ret = SDL_Init(SDL_INIT_VIDEO);
+    int ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     if(ret < 0)
         return false;
 
@@ -51,6 +52,20 @@ bool InitData()
         {
             success = false;
         }
+
+        g_sound_manager = SoundManager::GetInstance();
+        if (!g_sound_manager->Init()) {
+            return false;
+        }
+
+        g_sound_manager->LoadSound(SOUND_MUSIC, "Sound/background.mp3");
+        g_sound_manager->LoadSound(SOUND_BULLET, "Sound/bullet.wav");
+        g_sound_manager->LoadSound(SOUND_EXPLOSION, "Sound/explosion.wav");
+        g_sound_manager->LoadSound(SOUND_JUMP, "Sound/jump.wav");
+        g_sound_manager->LoadSound(SOUND_COLLECT, "Sound/collect.wav");
+        g_sound_manager->LoadSound(SOUND_GAMEOVER, "Sound/game_over.wav");
+
+        g_sound_manager->PlayMusic(-1);
     }
 
     return success;
@@ -65,16 +80,28 @@ bool LoadBackground()
     return true;
 }
 
-void close()
-{
+void close() {
     g_background.Free();
+
+
+    if (font_time != NULL) {
+        TTF_CloseFont(font_time);
+        font_time = NULL;
+    }
+
+
+    if (g_sound_manager != nullptr) {
+        g_sound_manager->Clean();
+        g_sound_manager = nullptr;
+    }
+
 
     SDL_DestroyRenderer(g_screen);
     g_screen = NULL;
-
     SDL_DestroyWindow(g_window);
     g_window = NULL;
 
+    TTF_Quit();
     IMG_Quit();
     SDL_Quit();
 }
@@ -246,10 +273,12 @@ int main(int argc, char* argv[])
                     exp.from_bullet = false;
                     exp.timer.start();
                     active_explosions.push_back(exp);
+                    g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
 
                     if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
                     {
+                        g_sound_manager->PlaySoundA(SOUND_GAMEOVER);
                         p_threat->Free();
                         close();
                         SDL_Quit();
@@ -315,6 +344,8 @@ int main(int argc, char* argv[])
                                     exp.from_bullet = true;
                                     exp.timer.start();
                                     active_explosions.push_back(exp);
+                                    g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
+
 
 
                                     p_bullet->set_is_move(false);
@@ -349,6 +380,8 @@ int main(int argc, char* argv[])
                             exp.from_bullet = true;
                             exp.timer.start();
                             active_explosions.push_back(exp);
+                            g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
+
 
                             p_player.RemoveBullet(m);
                             obj_threat->Free();

@@ -1,6 +1,8 @@
 
 #include "MainOb.h"
 
+extern SoundManager* g_sound_manager;
+
 MainOb::MainOb()
 {
     frame_ = 0;
@@ -108,6 +110,7 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
                 y_val_ = -PLAYER_JUMP_VAL;  // Nhảy lên
                 jump_count_++;              // Tăng số lần nhảy
                 on_ground_ = false;         // Đánh dấu nhân vật không đứng trên đất
+                g_sound_manager->PlaySoundA(SOUND_JUMP);
             }
             break;
         }
@@ -148,6 +151,7 @@ void MainOb::HandelInputAction(SDL_Event events, SDL_Renderer* screen)
 
             Bullet* p_bullet = new Bullet(); //tao ra vien dan
             p_bullet->set_bullet_type(Bullet::SPHERE_BULLET);
+            g_sound_manager->PlaySound(SOUND_BULLET);
             p_bullet->LoadImgBullet(screen);
 
 
@@ -296,6 +300,7 @@ void MainOb::CheckToMap(Map& map_data)
             {
                 map_data.tile[y1][x2] = 0;
                 map_data.tile[y2][x2] = 0;
+                g_sound_manager->PlaySoundA(SOUND_COLLECT);
                 IncreaseSp();
             }
             else
@@ -317,6 +322,7 @@ void MainOb::CheckToMap(Map& map_data)
             {
                 map_data.tile[y1][x1] = 0;
                 map_data.tile[y2][x1] = 0;
+                g_sound_manager->PlaySoundA(SOUND_COLLECT);
                 IncreaseSp();
             }
             else
@@ -351,6 +357,7 @@ void MainOb::CheckToMap(Map& map_data)
             {
                 map_data.tile[y2][x1] = 0;
                 map_data.tile[y2][x2] = 0;
+                g_sound_manager->PlaySoundA(SOUND_COLLECT);
                 IncreaseSp();
             }
             else
