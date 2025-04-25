@@ -8,6 +8,7 @@
 #include "TextOb.h"
 #include "PlayPower.h"
 #include "SoundManager.h"
+#include "MainMenu.h"
 
 BaseObject g_background;
 TTF_Font* font_time;
@@ -169,6 +170,31 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    MainMenu menu;
+    if (!menu.LoadMenu(g_screen)) {
+        return -1;
+    }
+
+    bool in_menu = true;
+    while (in_menu) {
+        while (SDL_PollEvent(&g_event)) {
+            if (g_event.type == SDL_QUIT) return 0;
+            int option = menu.HandleEvent(g_event);
+            if (option == MainMenu::MENU_PLAY) {
+                in_menu = false; // Bắt đầu game
+            } else if (option == MainMenu::MENU_EXIT) {
+                close();
+                SDL_Quit();
+                return 0;
+            }
+        }
+
+        SDL_RenderClear(g_screen);
+        menu.Render(g_screen);
+        SDL_RenderPresent(g_screen);
+    }
+
+
     GameMap game_map;
     game_map.LoadMap("map/map01.dat");
     game_map.LoadTiles(g_screen);
@@ -235,6 +261,49 @@ int main(int argc, char* argv[])
 
         // Kiểm tra nếu nhân vật rơi xuống vực
         if (p_player.GetRect().y > map_data.max_y_) {
+            // Tạo hiệu ứng nổ
+            ExplosionInfo exp;
+            exp.x = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
+            exp.y = p_player.GetRect().y - exp_main.get_frame_height() * 0.25;
+            exp.current_frame = 0;
+            exp.from_bullet = false;
+            exp.timer.start();
+            active_explosions.push_back(exp);
+
+            // Phát âm thanh nổ
+            g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
+
+            // Hiển thị hiệu ứng nổ
+            for (int i = 0; i < 20; i++) { // Hiển thị khoảng 20 frame
+                SDL_RenderClear(g_screen);
+
+                // Vẽ màn hình hiện tại
+                SDL_Rect bg_rect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+                g_background.Render(g_screen, &bg_rect);
+                game_map.DrawMap(g_screen);
+                p_player.Show(g_screen, map_data);
+                for (int j = 0; j < list_threats.size(); j++) {
+                    list_threats.at(j)->Show(g_screen);
+                }
+                // Hiển thị hiệu ứng nổ
+                int frame_idx = i / 2; // 2 frames thực tế = 1 frame hiệu ứng
+                if (frame_idx < NUM_FRAME_EXP) {
+                    exp_main.set_frame(frame_idx);
+                    exp_main.SetRect(exp.x, exp.y);
+                    exp_main.Show(g_screen);
+                }
+
+                SDL_RenderPresent(g_screen);
+                SDL_Delay(40); // 40ms mỗi frame
+            }
+
+            // Phát nhạc game over
+            g_sound_manager->PlaySoundA(SOUND_GAMEOVER);
+
+            // Đợi khoảng 1 giây để nghe nhạc
+            SDL_Delay(1000);
+
+            // Hiển thị MessageBox
             if (MessageBoxW(NULL, L"Bạn đã rơi xuống vực!", L"Game Over", MB_OK | MB_ICONSTOP) == IDOK) {
                 close();
                 SDL_Quit();
@@ -266,19 +335,49 @@ int main(int argc, char* argv[])
                 bool player_threat_Col = SDLCommonFunc::CheckCollision(rect_player, rect_threat);
                 if (player_threat_Col)
                 {
+                    // Tạo hiệu ứng nổ mới
                     ExplosionInfo exp;
                     exp.x = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
                     exp.y = p_player.GetRect().y - exp_main.get_frame_height() * 0.25;
                     exp.current_frame = 0;
                     exp.from_bullet = false;
                     exp.timer.start();
-                    active_explosions.push_back(exp);
+
+                    g_sound_manager->StopMusic();
                     g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
+                    // Hiển thị màn hình hiện tại (đóng băng mọi thứ)
+                    // Tạo một vòng lặp để chỉ hiển thị hiệu ứng nổ
+                    bool explosion_done = false;
+                    while (!explosion_done)
+                    {
 
+                        // Hiển thị hiệu ứng nổ
+                        int frame_duration = 40; // 40ms mỗi frame
+                        int ticks = exp.timer.get_ticks();
+                        int frame_idx = ticks / frame_duration;
+
+                        if (frame_idx >= NUM_FRAME_EXP) {
+                            explosion_done = true; // Kết thúc hiệu ứng nổ
+                        } else {
+                            exp_main.set_frame(frame_idx);
+                            exp_main.SetRect(exp.x, exp.y);
+                            exp_main.Show(g_screen);
+                        }
+
+                        SDL_RenderPresent(g_screen);
+                        SDL_Delay(20); // Giữ tốc độ ổn định
+                    }
+
+                    // Phát nhạc game over sau khi hiệu ứng nổ hoàn thành
+                    g_sound_manager->PlaySoundA(SOUND_GAMEOVER);
+
+                    // Đợi khoảng 1 giây để nghe nhạc game over
+                    SDL_Delay(1000);
+
+                    // Hiển thị MessageBox
                     if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
                     {
-                        g_sound_manager->PlaySoundA(SOUND_GAMEOVER);
                         p_threat->Free();
                         close();
                         SDL_Quit();
@@ -344,6 +443,7 @@ int main(int argc, char* argv[])
                                     exp.from_bullet = true;
                                     exp.timer.start();
                                     active_explosions.push_back(exp);
+                                    g_sound_manager->StopMusic();
                                     g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
 
@@ -380,6 +480,7 @@ int main(int argc, char* argv[])
                             exp.from_bullet = true;
                             exp.timer.start();
                             active_explosions.push_back(exp);
+                            g_sound_manager->StopMusic();
                             g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
 
