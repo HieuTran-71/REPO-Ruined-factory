@@ -121,71 +121,250 @@ void MainMenu::SaveHighScore(int current_mark) {
 void MainMenu::ShowHighScoreBoard(SDL_Renderer* screen) {
     bool show_score = true;
     SDL_Event e;
+    Uint32 lastTime = SDL_GetTicks();
 
-    // Load font
-    TTF_Font* font = TTF_OpenFont("font/CyberpunkCraftpixPixel.otf", 32); //Sửa lại font chữ
-    if (font == NULL) {
-        std::cerr<< "Failed to load font!" << SDL_GetError() << std::endl;
+    // Load fonts with different sizes
+    TTF_Font* titleFont = TTF_OpenFont("font/CyberpunkCraftpixPixel.otf", 40);
+    TTF_Font* scoreFont = TTF_OpenFont("font/CyberpunkCraftpixPixel.otf", 26);
+    TTF_Font* noteFont = TTF_OpenFont("font/CyberpunkCraftpixPixel.otf", 20);
+
+    if (titleFont == NULL || scoreFont == NULL || noteFont == NULL) {
+        std::cerr << "Failed to load fonts! " << SDL_GetError() << std::endl;
         return;
     }
 
+    // Load background image for high score
+    BaseObject scoreBackground;
+    bool bgLoaded = scoreBackground.LoadImg("img/score_background.png", screen);
+    if (!bgLoaded) {
+        // Fallback if image doesn't exist
+        std::cerr << "Failed to load score background, using default" << std::endl;
+    }
+
+    // Create trophy icon
+    BaseObject trophyIcon;
+    bool trophyLoaded = trophyIcon.LoadImg("img/trophy.png", screen);
+
+    // Stars for decoration
+    BaseObject starIcon;
+    bool starLoaded = starIcon.LoadImg("img/star.png", screen);
+
+    // Animation variables
+    float animOffset = 0.0f;
+    bool animDirection = true;
+
     while (show_score) {
+        // Calculate time delta for animations
+        Uint32 currentTime = SDL_GetTicks();
+        float deltaTime = (currentTime - lastTime) / 1000.0f;
+        lastTime = currentTime;
+
+        // Update animations
+        animOffset += (animDirection ? 1 : -1) * deltaTime * 30.0f;
+        if (animOffset > 10.0f) animDirection = false;
+        if (animOffset < -10.0f) animDirection = true;
+
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 show_score = false;
             } else if (e.type == SDL_KEYDOWN) {
-                if (e.key.keysym.sym == SDLK_ESCAPE) { // Nhấn ESC để quay lại
+                if (e.key.keysym.sym == SDLK_ESCAPE) {
                     show_score = false;
                 }
             }
         }
 
-        SDL_SetRenderDrawColor(screen, 0, 0, 0, 255); // Màu nâu
+        // Clear screen
+        SDL_SetRenderDrawColor(screen, 0, 0, 0, 255);
         SDL_RenderClear(screen);
 
-        // Tiêu đề
-        TextOb title;
-        title.SetText("High Score");
-        title.SetColor(TextOb::WHITE_TEXT);
-        title.SetFont(font);
-        title.LoadFromRenderText(font, screen);
-        title.RenderText(screen, SCREEN_WIDTH / 2 - title.GetWidth()/2, 50);
+        // Render background
+        if (bgLoaded) {
+            scoreBackground.Render(screen);
+        } else {
+            // Gradient background if image not available
+            for (int y = 0; y < SCREEN_HEIGHT; y++) {
+                int r = 20 + (y * 40 / SCREEN_HEIGHT);
+                int g = 10 + (y * 20 / SCREEN_HEIGHT);
+                int b = 40 + (y * 60 / SCREEN_HEIGHT);
+                SDL_SetRenderDrawColor(screen, r, g, b, 255);
+                SDL_RenderDrawLine(screen, 0, y, SCREEN_WIDTH, y);
+            }
+        }
 
-        // Hiển thị 10 điểm cao
-        int startY = 120;
-        for (size_t i = 0; i < high_scores_.size(); ++i) {
-            std::string rank_text = "No " + std::to_string(i + 1) + " :";
+        // Decorative border
+        SDL_Rect borderRect = {20, 20, SCREEN_WIDTH - 40, SCREEN_HEIGHT - 40};
+        SDL_SetRenderDrawColor(screen, 200, 180, 100, 255);
+        SDL_RenderDrawRect(screen, &borderRect);
+
+        SDL_Rect innerBorderRect = {25, 25, SCREEN_WIDTH - 50, SCREEN_HEIGHT - 50};
+        SDL_SetRenderDrawColor(screen, 150, 130, 80, 255);
+        SDL_RenderDrawRect(screen, &innerBorderRect);
+
+        // Score table header
+        SDL_Rect headerRect = {SCREEN_WIDTH / 2 - 200, 60, 400, 40};
+        SDL_SetRenderDrawColor(screen, 80, 60, 120, 200);
+        SDL_RenderFillRect(screen, &headerRect);
+        SDL_SetRenderDrawColor(screen, 200, 200, 200, 255);
+        SDL_RenderDrawRect(screen, &headerRect);
+
+        TextOb rankHeader;
+        rankHeader.SetFont(scoreFont);
+        rankHeader.SetText("RANK");
+        rankHeader.SetColor(TextOb::YELLOW_TEXT);
+        rankHeader.LoadFromRenderText(scoreFont, screen);
+        rankHeader.RenderText(screen, SCREEN_WIDTH / 2 - 170, 65);
+
+        TextOb scoreHeader;
+        scoreHeader.SetFont(scoreFont);
+        scoreHeader.SetText("SCORE");
+        scoreHeader.SetColor(TextOb::YELLOW_TEXT);
+        scoreHeader.LoadFromRenderText(scoreFont, screen);
+        scoreHeader.RenderText(screen, SCREEN_WIDTH / 2 + 50, 65);
+
+        // Display scores with visual enhancements
+        int startY = 110;
+        for (size_t i = 0; i < high_scores_.size() && i < 10; ++i) {
+            // Row background (alternating colors)
+            SDL_Rect rowRect = {SCREEN_WIDTH / 2 - 200, startY - 5, 400, 45};
+            if (i % 2 == 0) {
+                SDL_SetRenderDrawColor(screen, 40, 40, 60, 150);
+            } else {
+                SDL_SetRenderDrawColor(screen, 50, 50, 70, 150);
+            }
+            SDL_RenderFillRect(screen, &rowRect);
+
+            // Highlight for top 3 scores
+            if (i < 3) {
+                SDL_Rect highlightRect = {SCREEN_WIDTH / 2 - 205, startY - 10, 410, 55};
+                if (i == 0) {
+                    SDL_SetRenderDrawColor(screen, 255, 215, 0, 100); // Gold
+                } else if (i == 1) {
+                    SDL_SetRenderDrawColor(screen, 192, 192, 192, 100); // Silver
+                } else {
+                    SDL_SetRenderDrawColor(screen, 205, 127, 50, 100); // Bronze
+                }
+                SDL_RenderDrawRect(screen, &highlightRect);
+
+                // Add trophy icon for top scores
+                if (trophyLoaded) {
+                    trophyIcon.SetRect(SCREEN_WIDTH / 2 - 235, startY);
+                    trophyIcon.Render(screen);
+                }
+            }
+
+            // Rank display
+            std::string rank_text = "#" + std::to_string(i + 1);
             TextOb rank_item;
+            rank_item.SetFont(scoreFont);
             rank_item.SetText(rank_text);
-            rank_item.SetColor(TextOb::WHITE_TEXT);
-            rank_item.SetFont(font);
-            rank_item.LoadFromRenderText(font, screen);
-            rank_item.RenderText(screen, SCREEN_WIDTH / 2 - 150, startY);
 
+            // Different colors for different ranks
+            if (i == 0) {
+                rank_item.SetColor(255, 215, 0); // Gold
+            } else if (i == 1) {
+                rank_item.SetColor(220, 220, 220); // Silver
+            } else if (i == 2) {
+                rank_item.SetColor(205, 127, 50); // Bronze
+            } else {
+                rank_item.SetColor(TextOb::WHITE_TEXT);
+            }
+
+            rank_item.LoadFromRenderText(scoreFont, screen);
+            rank_item.RenderText(screen, SCREEN_WIDTH / 2 - 170, startY);
+
+            // Add star decorations for top scores
+            if (i < 3 && starLoaded) {
+                int starX = SCREEN_WIDTH / 2 - 120 + sin(currentTime/500.0f) * 5;
+                int starY = startY + 5 + (i == 0 ? animOffset : animOffset / 2.0f);
+                starIcon.SetRect(starX, starY);
+                starIcon.Render(screen);
+            }
+
+            // Score display with box
             std::string score_text = std::to_string(high_scores_[i]);
             TextOb score_item;
+            score_item.SetFont(scoreFont);
             score_item.SetText(score_text);
-            score_item.SetColor(TextOb::WHITE_TEXT);
-            score_item.SetFont(font);
-            score_item.LoadFromRenderText(font, screen);
-            SDL_Rect scoreRect = { SCREEN_WIDTH / 2 - 30, startY - 5, 100, score_item.GetHeight() + 10 }; // Điều chỉnh kích thước
-            SDL_SetRenderDrawColor(screen, 255, 255, 255, 255); // Màu trắng
+
+            // Different colors for different ranks
+            if (i == 0) {
+                score_item.SetColor(255, 255, 150); // Gold
+            } else if (i == 1) {
+                score_item.SetColor(230, 230, 230); // Silver
+            } else if (i == 2) {
+                score_item.SetColor(255, 200, 150); // Bronze
+            } else {
+                score_item.SetColor(TextOb::WHITE_TEXT);
+            }
+
+            score_item.LoadFromRenderText(scoreFont, screen);
+
+            // Score box with slight glow for top scores
+            SDL_Rect scoreRect = {SCREEN_WIDTH / 2 + 50, startY - 5, 120, 40};
+
+            if (i < 3) {
+                // Glow effect for top 3
+                SDL_Rect glowRect = {scoreRect.x - 3, scoreRect.y - 3, scoreRect.w + 6, scoreRect.h + 6};
+                if (i == 0) {
+                    SDL_SetRenderDrawColor(screen, 255, 215, 0, 100 + 50 * sin(currentTime/300.0f));
+                } else if (i == 1) {
+                    SDL_SetRenderDrawColor(screen, 192, 192, 192, 100 + 30 * sin(currentTime/400.0f));
+                } else {
+                    SDL_SetRenderDrawColor(screen, 205, 127, 50, 100 + 20 * sin(currentTime/500.0f));
+                }
+                SDL_RenderFillRect(screen, &glowRect);
+            }
+
+            // Score box background
+            SDL_SetRenderDrawColor(screen, 30, 30, 50, 200);
+            SDL_RenderFillRect(screen, &scoreRect);
+
+            // Score box border
+            SDL_SetRenderDrawColor(screen, 150, 150, 150, 255);
             SDL_RenderDrawRect(screen, &scoreRect);
-            score_item.RenderText(screen, SCREEN_WIDTH / 2 - 20, startY);
+
+            // Center score text in box
+            int scoreX = scoreRect.x + (scoreRect.w - score_item.GetWidth()) / 2;
+            score_item.RenderText(screen, scoreX, startY);
+
             startY += 50;
         }
 
-        // Ghi chú
+        // Navigation note with pulsing effect
         TextOb note;
-        note.SetText("Press Esc to comeback");
-        note.SetColor(TextOb::WHITE_TEXT);
-        note.SetFont(font);
-        note.LoadFromRenderText(font, screen);
-        note.RenderText(screen, SCREEN_WIDTH / 2 - note.GetWidth()/2, SCREEN_HEIGHT - 60);
+        note.SetFont(noteFont);
+        note.SetText("Press ESC to return to menu");
+        int noteAlpha = 150 + 105 * sin(currentTime/500.0f);
+        note.SetColor(200, 200, 220);
+        note.LoadFromRenderText(noteFont, screen);
+        note.RenderText(screen, SCREEN_WIDTH / 2 - note.GetWidth()/2, SCREEN_HEIGHT - 50);
+
+        // Render stars in corners for decoration if available
+        if (starLoaded) {
+            starIcon.SetRect(30, 30);
+            starIcon.Render(screen);
+
+            starIcon.SetRect(SCREEN_WIDTH - 54, 30);
+            starIcon.Render(screen);
+
+            starIcon.SetRect(30, SCREEN_HEIGHT - 54);
+            starIcon.Render(screen);
+
+            starIcon.SetRect(SCREEN_WIDTH - 54, SCREEN_HEIGHT - 54);
+            starIcon.Render(screen);
+        }
 
         SDL_RenderPresent(screen);
+
+        // Cap framerate
+        SDL_Delay(16); // ~60 FPS
     }
-    TTF_CloseFont(font);
+
+    // Clean up resources
+    TTF_CloseFont(titleFont);
+    TTF_CloseFont(scoreFont);
+    TTF_CloseFont(noteFont);
 }
 
 

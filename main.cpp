@@ -182,6 +182,28 @@ GameOverResult ShowGameOverScreen(SDL_Renderer* renderer, MainMenu& menu, int& c
         return GAMEOVER_EXIT;
     }
 
+    // Tạo các TextOb cho các nội dung
+    TextOb game_over_text;
+    game_over_text.SetColor(TextOb::WHITE_TEXT);
+    game_over_text.SetText("Game Over");
+    game_over_text.LoadFromRenderText(font_time, renderer);
+
+    TextOb continue_text;
+    continue_text.SetColor(TextOb::BLACK_TEXT);
+    continue_text.SetText("Continue");
+    continue_text.LoadFromRenderText(font_time, renderer);
+
+    TextOb exit_text;
+    exit_text.SetColor(TextOb::BLACK_TEXT);
+    exit_text.SetText("Exit");
+    exit_text.LoadFromRenderText(font_time, renderer);
+
+    TextOb score_text;
+    score_text.SetColor(TextOb::WHITE_TEXT);
+    std::string score_str = "Score: " + std::to_string(current_mark);
+    score_text.SetText(score_str);
+    score_text.LoadFromRenderText(font_time, renderer);
+
     SDL_Rect game_over_rect;
     game_over_rect.w = SCREEN_WIDTH / 2;
     game_over_rect.h = SCREEN_HEIGHT / 2;
@@ -204,6 +226,19 @@ GameOverResult ShowGameOverScreen(SDL_Renderer* renderer, MainMenu& menu, int& c
     blue_button_rect.x = (SCREEN_WIDTH / 2) + button_spacing;
     blue_button_rect.y = SCREEN_HEIGHT * 3 / 4;
 
+    // Tính toán vị trí văn bản
+    int game_over_text_x = (SCREEN_WIDTH - game_over_text.GetWidth()) / 2;
+    int game_over_text_y = game_over_rect.y + 100; // Khoảng cách từ trên xuống
+
+    int score_text_x = (SCREEN_WIDTH - score_text.GetWidth()) / 2;
+    int score_text_y = game_over_text_y + game_over_text.GetHeight() + 20; // Dưới Game Over
+
+    int continue_text_x = blue_button_rect.x + (blue_button_rect.w - continue_text.GetWidth()) / 2;
+    int continue_text_y = blue_button_rect.y + (blue_button_rect.h - continue_text.GetHeight()) / 2;
+
+    int exit_text_x = red_button_rect.x + (red_button_rect.w - exit_text.GetWidth()) / 2;
+    int exit_text_y = red_button_rect.y + (red_button_rect.h - exit_text.GetHeight()) / 2;
+
     bool game_over_done = false;
     GameOverResult result = GAMEOVER_EXIT; // Mặc định là thoát game
 
@@ -213,6 +248,7 @@ GameOverResult ShowGameOverScreen(SDL_Renderer* renderer, MainMenu& menu, int& c
             if (event.type == SDL_QUIT) {
                 game_over_done = true;
                 result = GAMEOVER_EXIT;
+                break;
             }
             else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 int mouse_x, mouse_y;
@@ -224,19 +260,33 @@ GameOverResult ShowGameOverScreen(SDL_Renderer* renderer, MainMenu& menu, int& c
                     game_over_done = true;
                     menu.SaveHighScore(current_mark);
                     result = GAMEOVER_MENU;
+                    break;
                 }
                 else if (mouse_x >= red_button_rect.x && mouse_x <= red_button_rect.x + red_button_rect.w &&
                     mouse_y >= red_button_rect.y && mouse_y <= red_button_rect.y + red_button_rect.h) {
                     // Người chơi nhấn nút đỏ (Thoát)
                     game_over_done = true;
                     result = GAMEOVER_EXIT;
+                    break;
                 }
             }
         }
 
+        // Vẽ background
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Màu đen
+        SDL_RenderClear(renderer);
+
+        // Vẽ các thành phần
         SDL_RenderCopy(renderer, game_over_texture, NULL, &game_over_rect);
         SDL_RenderCopy(renderer, blue_button_texture, NULL, &blue_button_rect);
         SDL_RenderCopy(renderer, red_button_texture, NULL, &red_button_rect);
+
+        // Render text
+        game_over_text.RenderText(renderer, game_over_text_x, game_over_text_y);
+        score_text.RenderText(renderer, score_text_x, score_text_y);
+        continue_text.RenderText(renderer, continue_text_x, continue_text_y);
+        exit_text.RenderText(renderer, exit_text_x, exit_text_y);
+
         SDL_RenderPresent(renderer);
         SDL_Delay(100);
     }
@@ -249,88 +299,15 @@ GameOverResult ShowGameOverScreen(SDL_Renderer* renderer, MainMenu& menu, int& c
     return result;
 }
 
-int main(int argc, char* argv[]) {
+bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
+{
     ImpTimer fps_timer;
+    bool is_quit = false;
 
-    if (InitData() == false) {
-        return -1;
-    }
-
-     // Load background game
-    SDL_Surface* game_bg_surface = IMG_Load("image/background.png");
-    if (!game_bg_surface) {
-        SDL_Log("IMG_Load: %s\n", IMG_GetError());
-        return -1;
-    }
-    g_game_background = SDL_CreateTextureFromSurface(g_screen, game_bg_surface);
-    SDL_FreeSurface(game_bg_surface);
-    if (!g_game_background) {
-        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
-        return -1;
-    }
-
-    // Load background menu
-    SDL_Surface* menu_bg_surface = IMG_Load("image/menu_background.png"); // Đặt đường dẫn đúng
-    if (!menu_bg_surface) {
-        SDL_Log("IMG_Load: %s\n", IMG_GetError());
-        return -1;
-    }
-    g_menu_background = SDL_CreateTextureFromSurface(g_screen, menu_bg_surface);
-    SDL_FreeSurface(menu_bg_surface);
-    if (!g_menu_background) {
-        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
-        return -1;
-    }
-    g_current_background = g_menu_background; // Khởi tạo background là menu
-
-
-    if (LoadBackground() == false) {
-        return -1;
-    }
-
-    MainMenu menu;
-    if (!menu.LoadMenu(g_screen)) {
-        return -1;
-    }
-
-    bool quit_program = false;
-    bool in_menu = true;
-    int current_mark = 0;
-
-    while (!quit_program)
-    {
-        in_menu = true;
-        current_mark = 0;
-
-        while (in_menu)
-        {
-            while (SDL_PollEvent(&g_event)) {
-            if (g_event.type == SDL_QUIT) return 0;
-            int option = menu.HandleEvent(g_event, current_mark); // Truyền current_mark
-            if (option == MainMenu::MENU_PLAY) {
-                in_menu = false; // Bắt đầu game
-            }
-            else if (option == MainMenu::MENU_HIGHSCORE) {
-                menu.ShowHighScoreBoard(g_screen);
-            }
-            else if (option == MainMenu::MENU_EXIT) {
-                close();
-                SDL_Quit();
-                return 0;
-            }
-        }
-
-        SDL_RenderClear(g_screen);
-        menu.Render(g_screen);
-        SDL_RenderPresent(g_screen);
-        }
-    }
-
-
+    // Init lại game mỗi lần Play
     GameMap game_map;
     game_map.LoadMap("map/map01.dat");
     game_map.LoadTiles(g_screen);
-
     Map map_data = game_map.getMap();
 
     MainOb p_player;
@@ -344,18 +321,15 @@ int main(int argc, char* argv[]) {
     std::vector<ThreatOb*> list_threats = MakeThreatList(map_data);
 
     ExplosionOb exp_player;
-    bool tRet = exp_player.LoadImg("image/exp_bullet.png", g_screen);
-    if (!tRet) return -1;
+    exp_player.LoadImg("image/exp_bullet.png", g_screen);
     exp_player.set_clips();
 
     ExplosionOb exp_main;
-    bool mRet = exp_main.LoadImg("image/exp_bullet.png", g_screen);
-    if (!mRet) return -1;
+    exp_main.LoadImg("image/exp_bullet.png", g_screen);
     exp_main.set_clips();
 
     ExplosionOb exp_bullet_tile;
-    bool bRet = exp_bullet_tile.LoadImg("image/exp_bullet.png", g_screen);
-    if (!bRet) return -1;
+    exp_bullet_tile.LoadImg("image/exp_bullet.png", g_screen);
     exp_bullet_tile.set_clips();
 
     TextOb time_game;
@@ -363,10 +337,10 @@ int main(int argc, char* argv[]) {
 
     TextOb mark_game;
     mark_game.SetColor(TextOb::WHITE_TEXT);
+
     UINT mark_value = 0;
     std::string strMark;
 
-    bool is_quit = false;
     while (!is_quit) {
         fps_timer.start();
         while (SDL_PollEvent(&g_event) != 0) {
@@ -402,6 +376,7 @@ int main(int argc, char* argv[]) {
             exp.timer.start();
             active_explosions.push_back(exp);
 
+            g_sound_manager->StopMusic();
             g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
             // Hiển thị hiệu ứng nổ
@@ -432,16 +407,18 @@ int main(int argc, char* argv[]) {
 
             SDL_Delay(1000);
 
+            current_mark = mark_value;
             GameOverResult result = ShowGameOverScreen(g_screen, menu, current_mark);
             if (result == GAMEOVER_MENU)
             {
             // Quay về menu
                 in_menu = true;
-                break; // Thoát vòng lặp game hiện tại
+                return true;; // Thoát vòng lặp game hiện tại
             } else
             {
                 // Thoát game
                 is_quit = true;
+                return false;
             }
             continue;
         }
@@ -478,7 +455,6 @@ int main(int argc, char* argv[]) {
                     g_sound_manager->StopMusic();
                     g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
-                    // Hiển thị màn hình hiện tại (đóng băng mọi thứ)
                     // Tạo một vòng lặp để chỉ hiển thị hiệu ứng nổ
                     bool explosion_done = false;
                     while (!explosion_done) {
@@ -506,16 +482,19 @@ int main(int argc, char* argv[]) {
 
                     SDL_Delay(1000);
 
+                    current_mark = mark_value;
                     GameOverResult result = ShowGameOverScreen(g_screen, menu, current_mark);
                     if (result == GAMEOVER_MENU)
                     {
+                        active_explosions.clear();
                         // Quay về menu
                         in_menu = true;
-                        break; // Thoát vòng lặp game hiện tại
+                        return true; // Thoát vòng lặp game hiện tại
                     } else
                     {
                         // Thoát game
                         is_quit = true;
+                        return false;
                     }
                     continue;
                 }
@@ -697,27 +676,101 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    for (int i = 0; i < list_threats.size(); i++)
-    {
-        ThreatOb* p_threat = list_threats.at(i);
-        if (p_threat)
-        {
-            p_threat->Free();
-            p_threat = NULL;
-        }
+    return true;
+}
+
+int main(int argc, char* argv[]) {
+    if (InitData() == false) {
+        return -1;
     }
 
-    list_threats.clear();
+    // Load background game
+    SDL_Surface* game_bg_surface = IMG_Load("image/background.png");
+    if (!game_bg_surface) {
+        SDL_Log("IMG_Load: %s\n", IMG_GetError());
+        return -1;
+    }
+    g_game_background = SDL_CreateTextureFromSurface(g_screen, game_bg_surface);
+    SDL_FreeSurface(game_bg_surface);
 
-    GameOverResult result = ShowGameOverScreen(g_screen, menu, current_mark);
-        if (result == GAMEOVER_MENU) {
-            is_quit = true; // Thoát game loop
-            // Không cần đặt in_menu = true vì vòng lặp ngoài sẽ bắt đầu lại
-        } else {
-            is_quit = true;
-            quit_program = true; // Thoát cả chương trình
+    if (!g_game_background) {
+        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        return -1;
+    }
+
+    // Load background menu
+    SDL_Surface* menu_bg_surface = IMG_Load("image/menu_background.png");
+    if (!menu_bg_surface) {
+        SDL_Log("IMG_Load: %s\n", IMG_GetError());
+        return -1;
+    }
+    g_menu_background = SDL_CreateTextureFromSurface(g_screen, menu_bg_surface);
+    SDL_FreeSurface(menu_bg_surface);
+
+    if (!g_menu_background) {
+        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        return -1;
+    }
+
+    g_current_background = g_menu_background; // Khởi tạo background là menu
+
+    if (LoadBackground() == false) {
+        return -1;
+    }
+
+    MainMenu menu;
+    if (!menu.LoadMenu(g_screen)) {
+        return -1;
+    }
+
+    bool quit_program = false;
+
+    while (!quit_program)
+    {
+        bool in_menu = true;
+        int current_mark = 0;
+
+        // MENU LOOP
+        while (in_menu)
+        {
+            while (SDL_PollEvent(&g_event)) {
+                if (g_event.type == SDL_QUIT) {
+                    quit_program = true;
+                    in_menu = false;
+                    break;
+                }
+
+                int option = menu.HandleEvent(g_event, current_mark);
+                if (option == MainMenu::MENU_PLAY) {
+                    in_menu = false; // Vào game
+                }
+                else if (option == MainMenu::MENU_HIGHSCORE) {
+                    menu.ShowHighScoreBoard(g_screen);
+                }
+                else if (option == MainMenu::MENU_EXIT) {
+                    quit_program = true;
+                    in_menu = false;
+                    break;
+                }
+            }
+
+            SDL_RenderClear(g_screen);
+            menu.Render(g_screen);
+            SDL_RenderPresent(g_screen);
         }
 
+        if (quit_program) {
+            break;
+        }
+
+        // PLAY GAME LOOP
+        bool game_running = PlayGame(current_mark, menu, in_menu);
+
+        if (!game_running) {
+            quit_program = true;
+            break;
+        }
+    }
 
     close();
     return 0;
