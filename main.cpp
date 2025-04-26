@@ -1,4 +1,3 @@
-
 #include "BaseObject.h"
 #include "Game_map.h"
 #include "MainOb.h"
@@ -9,48 +8,47 @@
 #include "PlayPower.h"
 #include "SoundManager.h"
 #include "MainMenu.h"
+#include <iostream>
+
 
 BaseObject g_background;
 TTF_Font* font_time;
 SoundManager* g_sound_manager = nullptr;
+// Biến toàn cục để lưu trạng thái background
+SDL_Texture* g_current_background = nullptr;
+SDL_Texture* g_game_background = nullptr; // Để lưu background của game
+SDL_Texture* g_menu_background = nullptr; // Để lưu background của menu
 
-
-bool InitData()
-{
+bool InitData() {
     bool success = true;
     int ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-    if(ret < 0)
+    if (ret < 0)
         return false;
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
-    g_window = SDL_CreateWindow("R.O.B.O : Ruined factory", SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    g_window = SDL_CreateWindow("R.O.B.O : Ruined factory", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 
-    if(g_window == NULL)
-    {
+    if (g_window == NULL) {
         success = false;
     }
-    else
-    {
+    else {
         g_screen = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED);
-        if(g_screen == NULL)
+        if (g_screen == NULL)
             success = false;
-        else
-        {
+        else {
             SDL_SetRenderDrawColor(g_screen, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR);
             int imgFlags = IMG_INIT_PNG;
-            if(!(IMG_Init(imgFlags) && imgFlags))
+            if (!(IMG_Init(imgFlags) & imgFlags))
                 success = false;
         }
 
-        if (TTF_Init()== -1)
-        {
+        if (TTF_Init() == -1) {
             success = false;
         }
 
-        font_time = TTF_OpenFont("font/SFUFuturaBook.TTF", 20);
-        if (font_time == NULL)
-        {
+        font_time = TTF_OpenFont("font/CyberpunkCraftpixPixel.otf", 20);
+        if (font_time == NULL) {
             success = false;
         }
 
@@ -72,13 +70,8 @@ bool InitData()
     return success;
 }
 
-bool LoadBackground()
-{
-    bool ret = g_background.LoadImg("image/background.png", g_screen);
-    if(ret == false)
-        return false;
-
-    return true;
+bool LoadBackground() {
+    return g_background.LoadImg("image/background.png", g_screen);
 }
 
 void close() {
@@ -108,38 +101,33 @@ void close() {
 }
 
 
-std::vector<ThreatOb*> MakeThreatList(Map& map_data)
-{
+std::vector<ThreatOb*> MakeThreatList(Map& map_data) {
     std::vector<ThreatOb*> list_threats;
 
-    for (int y = 0; y < MAX_MAP_Y; ++y)
-    {
-        for (int x = 0; x < MAX_MAP_X; ++x)
-        {
+    for (int y = 0; y < MAX_MAP_Y; ++y) {
+        for (int x = 0; x < MAX_MAP_X; ++x) {
             int val = map_data.tile[y][x];
 
-            if (val == 6)
-            {
+            if (val == 6) {
                 ThreatOb* p_threat = new ThreatOb();
-                if (p_threat != nullptr)
-                {
-                    p_threat->LoadImg("image/threat_Lv1_L .png", g_screen);
-                    p_threat->set_clips();
-                    p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
 
-                    int pos_x = x * TILE_SIZE;
-                    int pos_y = y * TILE_SIZE;
+                p_threat->LoadImg("image/threat_Lv1_L .png", g_screen);
+                p_threat->set_clips();
+                p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
 
-                    p_threat->set_x_pos(pos_x);
-                    p_threat->set_y_pos(pos_y);
+                int pos_x = x * TILE_SIZE;
+                int pos_y = y * TILE_SIZE;
 
-                    int pos1 = pos_x - 200;
-                    int pos2 = pos_x + 200;
-                    p_threat->SetAnimation(pos1, pos2);
-                    p_threat->set_input_left(1);
+                p_threat->set_x_pos(pos_x);
+                p_threat->set_y_pos(pos_y);
 
-                    list_threats.push_back(p_threat);
-                }
+                int pos1 = pos_x - 200;
+                int pos2 = pos_x + 200;
+                p_threat->SetAnimation(pos1, pos2);
+                p_threat->set_input_left(1);
+
+                list_threats.push_back(p_threat);
+
 
                 map_data.tile[y][x] = 0;
             }
@@ -158,13 +146,143 @@ struct ExplosionInfo {
 
 std::vector<ExplosionInfo> active_explosions;
 
-int main(int argc, char* argv[])
-{
+GameOverResult ShowGameOverScreen(SDL_Renderer* renderer, MainMenu& menu, int& current_mark) {
+    // Load hình ảnh Game Over (đảm bảo đường dẫn đúng)
+    SDL_Surface* game_over_surface = IMG_Load("image/game_over_window.png");
+    if (!game_over_surface) {
+        SDL_Log("IMG_Load: %s\n", IMG_GetError());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Lỗi", "Không thể tải ảnh Game Over!", g_window);
+        return GAMEOVER_EXIT;
+    }
+    SDL_Texture* game_over_texture = SDL_CreateTextureFromSurface(renderer, game_over_surface);
+    SDL_FreeSurface(game_over_surface);
+    if (!game_over_texture) {
+        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Lỗi", "Không thể tạo texture Game Over!", g_window);
+        return GAMEOVER_EXIT;
+    }
+
+    // Load nút xanh (Continue/Menu) và nút đỏ (Exit)
+    SDL_Surface* blue_button_surface = IMG_Load("image/Button-Continue.png");
+    SDL_Surface* red_button_surface = IMG_Load("image/Button-Exit.png");
+    if (!blue_button_surface || !red_button_surface) {
+        SDL_Log("IMG_Load (button): %s\n", IMG_GetError());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Lỗi", "Không thể tải ảnh nút!", g_window);
+        SDL_DestroyTexture(game_over_texture);
+        return GAMEOVER_EXIT;
+    }
+    SDL_Texture* blue_button_texture = SDL_CreateTextureFromSurface(renderer, blue_button_surface);
+    SDL_Texture* red_button_texture = SDL_CreateTextureFromSurface(renderer, red_button_surface);
+    SDL_FreeSurface(blue_button_surface);
+    SDL_FreeSurface(red_button_surface);
+    if (!blue_button_texture || !red_button_texture) {
+        SDL_Log("SDL_CreateTextureFromSurface (button): %s\n", SDL_GetError());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Lỗi", "Không thể tạo texture nút!", g_window);
+        SDL_DestroyTexture(game_over_texture);
+        return GAMEOVER_EXIT;
+    }
+
+    SDL_Rect game_over_rect;
+    game_over_rect.w = SCREEN_WIDTH / 2;
+    game_over_rect.h = SCREEN_HEIGHT / 2;
+    game_over_rect.x = (SCREEN_WIDTH - game_over_rect.w) / 2;
+    game_over_rect.y = (SCREEN_HEIGHT - game_over_rect.h) / 2;
+
+    int button_width = 120;
+    int button_height = 60;
+    int button_spacing = 30;
+
+    SDL_Rect red_button_rect;  // Nút đỏ (Exit)
+    red_button_rect.w = button_width;
+    red_button_rect.h = button_height;
+    red_button_rect.x = (SCREEN_WIDTH / 2) - button_width - button_spacing;
+    red_button_rect.y = SCREEN_HEIGHT * 3 / 4;
+
+    SDL_Rect blue_button_rect;  // Nút xanh (Continue/Menu)
+    blue_button_rect.w = button_width;
+    blue_button_rect.h = button_height;
+    blue_button_rect.x = (SCREEN_WIDTH / 2) + button_spacing;
+    blue_button_rect.y = SCREEN_HEIGHT * 3 / 4;
+
+    bool game_over_done = false;
+    GameOverResult result = GAMEOVER_EXIT; // Mặc định là thoát game
+
+    while (!game_over_done) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                game_over_done = true;
+                result = GAMEOVER_EXIT;
+            }
+            else if (event.type == SDL_MOUSEBUTTONDOWN) {
+                int mouse_x, mouse_y;
+                SDL_GetMouseState(&mouse_x, &mouse_y);
+
+                if (mouse_x >= blue_button_rect.x && mouse_x <= blue_button_rect.x + blue_button_rect.w &&
+                    mouse_y >= blue_button_rect.y && mouse_y <= blue_button_rect.y + blue_button_rect.h) {
+                    // Người chơi nhấn nút xanh (Quay về menu)
+                    game_over_done = true;
+                    menu.SaveHighScore(current_mark);
+                    result = GAMEOVER_MENU;
+                }
+                else if (mouse_x >= red_button_rect.x && mouse_x <= red_button_rect.x + red_button_rect.w &&
+                    mouse_y >= red_button_rect.y && mouse_y <= red_button_rect.y + red_button_rect.h) {
+                    // Người chơi nhấn nút đỏ (Thoát)
+                    game_over_done = true;
+                    result = GAMEOVER_EXIT;
+                }
+            }
+        }
+
+        SDL_RenderCopy(renderer, game_over_texture, NULL, &game_over_rect);
+        SDL_RenderCopy(renderer, blue_button_texture, NULL, &blue_button_rect);
+        SDL_RenderCopy(renderer, red_button_texture, NULL, &red_button_rect);
+        SDL_RenderPresent(renderer);
+        SDL_Delay(100);
+    }
+
+    // Giải phóng
+    SDL_DestroyTexture(game_over_texture);
+    SDL_DestroyTexture(blue_button_texture);
+    SDL_DestroyTexture(red_button_texture);
+
+    return result;
+}
+
+int main(int argc, char* argv[]) {
     ImpTimer fps_timer;
 
     if (InitData() == false) {
         return -1;
     }
+
+     // Load background game
+    SDL_Surface* game_bg_surface = IMG_Load("image/background.png");
+    if (!game_bg_surface) {
+        SDL_Log("IMG_Load: %s\n", IMG_GetError());
+        return -1;
+    }
+    g_game_background = SDL_CreateTextureFromSurface(g_screen, game_bg_surface);
+    SDL_FreeSurface(game_bg_surface);
+    if (!g_game_background) {
+        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        return -1;
+    }
+
+    // Load background menu
+    SDL_Surface* menu_bg_surface = IMG_Load("image/menu_background.png"); // Đặt đường dẫn đúng
+    if (!menu_bg_surface) {
+        SDL_Log("IMG_Load: %s\n", IMG_GetError());
+        return -1;
+    }
+    g_menu_background = SDL_CreateTextureFromSurface(g_screen, menu_bg_surface);
+    SDL_FreeSurface(menu_bg_surface);
+    if (!g_menu_background) {
+        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        return -1;
+    }
+    g_current_background = g_menu_background; // Khởi tạo background là menu
+
 
     if (LoadBackground() == false) {
         return -1;
@@ -175,14 +293,27 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    bool quit_program = false;
     bool in_menu = true;
-    while (in_menu) {
-        while (SDL_PollEvent(&g_event)) {
+    int current_mark = 0;
+
+    while (!quit_program)
+    {
+        in_menu = true;
+        current_mark = 0;
+
+        while (in_menu)
+        {
+            while (SDL_PollEvent(&g_event)) {
             if (g_event.type == SDL_QUIT) return 0;
-            int option = menu.HandleEvent(g_event);
+            int option = menu.HandleEvent(g_event, current_mark); // Truyền current_mark
             if (option == MainMenu::MENU_PLAY) {
                 in_menu = false; // Bắt đầu game
-            } else if (option == MainMenu::MENU_EXIT) {
+            }
+            else if (option == MainMenu::MENU_HIGHSCORE) {
+                menu.ShowHighScoreBoard(g_screen);
+            }
+            else if (option == MainMenu::MENU_EXIT) {
                 close();
                 SDL_Quit();
                 return 0;
@@ -192,6 +323,7 @@ int main(int argc, char* argv[])
         SDL_RenderClear(g_screen);
         menu.Render(g_screen);
         SDL_RenderPresent(g_screen);
+        }
     }
 
 
@@ -207,7 +339,7 @@ int main(int argc, char* argv[])
 
     PlayMoney player_money;
     player_money.Init(g_screen);
-    player_money.SetPos(SCREEN_WIDTH*0.5 - 300, 8);
+    player_money.SetPos(SCREEN_WIDTH * 0.5 - 300, 8);
 
     std::vector<ThreatOb*> list_threats = MakeThreatList(map_data);
 
@@ -217,12 +349,12 @@ int main(int argc, char* argv[])
     exp_player.set_clips();
 
     ExplosionOb exp_main;
-    bool mRet = exp_main.LoadImg("image/exp_bullet.png",g_screen);
+    bool mRet = exp_main.LoadImg("image/exp_bullet.png", g_screen);
     if (!mRet) return -1;
     exp_main.set_clips();
 
     ExplosionOb exp_bullet_tile;
-    bool bRet = exp_bullet_tile.LoadImg("image/exp_bullet.png",g_screen);
+    bool bRet = exp_bullet_tile.LoadImg("image/exp_bullet.png", g_screen);
     if (!bRet) return -1;
     exp_bullet_tile.set_clips();
 
@@ -232,6 +364,7 @@ int main(int argc, char* argv[])
     TextOb mark_game;
     mark_game.SetColor(TextOb::WHITE_TEXT);
     UINT mark_value = 0;
+    std::string strMark;
 
     bool is_quit = false;
     while (!is_quit) {
@@ -248,7 +381,7 @@ int main(int argc, char* argv[])
         SDL_SetRenderDrawColor(g_screen, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR);
         SDL_RenderClear(g_screen);
 
-        SDL_Rect bg_rect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+        SDL_Rect bg_rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
         g_background.Render(g_screen, &bg_rect); // nen luon duoc can chinh theo man hinh
 
 
@@ -261,7 +394,6 @@ int main(int argc, char* argv[])
 
         // Kiểm tra nếu nhân vật rơi xuống vực
         if (p_player.GetRect().y > map_data.max_y_) {
-            // Tạo hiệu ứng nổ
             ExplosionInfo exp;
             exp.x = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
             exp.y = p_player.GetRect().y - exp_main.get_frame_height() * 0.25;
@@ -270,7 +402,6 @@ int main(int argc, char* argv[])
             exp.timer.start();
             active_explosions.push_back(exp);
 
-            // Phát âm thanh nổ
             g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
             // Hiển thị hiệu ứng nổ
@@ -278,7 +409,7 @@ int main(int argc, char* argv[])
                 SDL_RenderClear(g_screen);
 
                 // Vẽ màn hình hiện tại
-                SDL_Rect bg_rect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+                SDL_Rect bg_rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
                 g_background.Render(g_screen, &bg_rect);
                 game_map.DrawMap(g_screen);
                 p_player.Show(g_screen, map_data);
@@ -297,18 +428,22 @@ int main(int argc, char* argv[])
                 SDL_Delay(40); // 40ms mỗi frame
             }
 
-            // Phát nhạc game over
             g_sound_manager->PlaySoundA(SOUND_GAMEOVER);
 
-            // Đợi khoảng 1 giây để nghe nhạc
             SDL_Delay(1000);
 
-            // Hiển thị MessageBox
-            if (MessageBoxW(NULL, L"Bạn đã rơi xuống vực!", L"Game Over", MB_OK | MB_ICONSTOP) == IDOK) {
-                close();
-                SDL_Quit();
-                return 0;
+            GameOverResult result = ShowGameOverScreen(g_screen, menu, current_mark);
+            if (result == GAMEOVER_MENU)
+            {
+            // Quay về menu
+                in_menu = true;
+                break; // Thoát vòng lặp game hiện tại
+            } else
+            {
+                // Thoát game
+                is_quit = true;
             }
+            continue;
         }
 
         game_map.SetMap(map_data);
@@ -320,11 +455,9 @@ int main(int argc, char* argv[])
         player_money.Show(g_screen);
 
 
-        for (int i = 0 ; i < list_threats.size(); i++)
-        {
+        for (int i = 0; i < list_threats.size(); i++) {
             ThreatOb* p_threat = list_threats.at(i);
-            if (p_threat != NULL)
-            {
+            if (p_threat != NULL) {
                 p_threat->SetMapXY(map_data.start_x_, map_data.start_y_);
                 p_threat->ImpMoveType(g_screen);
                 p_threat->DoPlayer(map_data);
@@ -333,8 +466,7 @@ int main(int argc, char* argv[])
                 SDL_Rect rect_player = p_player.GetRectFrame();
                 SDL_Rect rect_threat = p_threat->GetRectFrame();
                 bool player_threat_Col = SDLCommonFunc::CheckCollision(rect_player, rect_threat);
-                if (player_threat_Col)
-                {
+                if (player_threat_Col) {
                     // Tạo hiệu ứng nổ mới
                     ExplosionInfo exp;
                     exp.x = p_player.GetRect().x - exp_main.get_frame_width() * 0.07;
@@ -349,8 +481,7 @@ int main(int argc, char* argv[])
                     // Hiển thị màn hình hiện tại (đóng băng mọi thứ)
                     // Tạo một vòng lặp để chỉ hiển thị hiệu ứng nổ
                     bool explosion_done = false;
-                    while (!explosion_done)
-                    {
+                    while (!explosion_done) {
 
                         // Hiển thị hiệu ứng nổ
                         int frame_duration = 40; // 40ms mỗi frame
@@ -359,7 +490,8 @@ int main(int argc, char* argv[])
 
                         if (frame_idx >= NUM_FRAME_EXP) {
                             explosion_done = true; // Kết thúc hiệu ứng nổ
-                        } else {
+                        }
+                        else {
                             exp_main.set_frame(frame_idx);
                             exp_main.SetRect(exp.x, exp.y);
                             exp_main.Show(g_screen);
@@ -372,17 +504,20 @@ int main(int argc, char* argv[])
                     // Phát nhạc game over sau khi hiệu ứng nổ hoàn thành
                     g_sound_manager->PlaySoundA(SOUND_GAMEOVER);
 
-                    // Đợi khoảng 1 giây để nghe nhạc game over
                     SDL_Delay(1000);
 
-                    // Hiển thị MessageBox
-                    if (MessageBoxW(NULL, L"Game Over", L"Info", MB_OK | MB_ICONSTOP) == IDOK)
+                    GameOverResult result = ShowGameOverScreen(g_screen, menu, current_mark);
+                    if (result == GAMEOVER_MENU)
                     {
-                        p_threat->Free();
-                        close();
-                        SDL_Quit();
-                        return 0;
+                        // Quay về menu
+                        in_menu = true;
+                        break; // Thoát vòng lặp game hiện tại
+                    } else
+                    {
+                        // Thoát game
+                        is_quit = true;
                     }
+                    continue;
                 }
             }
         }
@@ -573,6 +708,16 @@ int main(int argc, char* argv[])
     }
 
     list_threats.clear();
+
+    GameOverResult result = ShowGameOverScreen(g_screen, menu, current_mark);
+        if (result == GAMEOVER_MENU) {
+            is_quit = true; // Thoát game loop
+            // Không cần đặt in_menu = true vì vòng lặp ngoài sẽ bắt đầu lại
+        } else {
+            is_quit = true;
+            quit_program = true; // Thoát cả chương trình
+        }
+
 
     close();
     return 0;

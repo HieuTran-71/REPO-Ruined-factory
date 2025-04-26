@@ -1,8 +1,8 @@
-
 #ifndef TEXT_OB_H_
 #define TEXT_OB_H_
 
 #include "CommonFunc.h"
+#include <string> // Include string for std::string
 
 class TextOb
 {
@@ -15,6 +15,7 @@ public:
         RED_TEXT = 0,
         WHITE_TEXT = 1,
         BLACK_TEXT = 2,
+        YELLOW_TEXT = 3
     };
 
     bool LoadFromRenderText(TTF_Font* font, SDL_Renderer* screen);
@@ -26,24 +27,24 @@ public:
     void RenderText(SDL_Renderer* screen,
                     int xp, int yp,
                     SDL_Rect* clip = NULL,
-                    double angle=0.0,
+                    double angle = 0.0,
                     SDL_Point* center = NULL,
-                    SDL_RendererFlip filp = SDL_FLIP_NONE);
+                    SDL_RendererFlip flip = SDL_FLIP_NONE);
 
-    int GetWidth() const {return width_;}
-    int GetHeight() const {return height_;}
+    int GetWidth() const { return width_; }
+    int GetHeight() const { return height_; }
 
-    void SetText(const std::string& text) { str_val_ = text;}
-    std::string GetText() const {return str_val_;}
+    void SetText(const std::string& text) { str_val_ = text; }
+    std::string GetText() const { return str_val_; }
+    void SetFont(TTF_Font* font); // Added SetFont
+
 private:
     std::string str_val_;
     SDL_Color text_color_;
     SDL_Texture* texture_;
     int height_;
     int width_;
+    TTF_Font* font_;
 };
-
-
-
 
 #endif
