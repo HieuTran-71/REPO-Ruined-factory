@@ -38,9 +38,9 @@ void GameMap::LoadMap(char* name)
     game_map_.max_y_ = (game_map_.max_y_ + 1) * TILE_SIZE;
 
     game_map_.start_x_ = 0;
-    game_map_.start_y_ =0;
+    game_map_.start_y_ = 0;
 
-    game_map_.file_name = name;
+    game_map_.file_name = std::string(name);
     fclose(fp);
 }
 

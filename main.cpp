@@ -64,7 +64,6 @@ bool InitData() {
         g_sound_manager->LoadSound(SOUND_COLLECT, "Sound/collect.wav");
         g_sound_manager->LoadSound(SOUND_GAMEOVER, "Sound/game_over.wav");
 
-        g_sound_manager->PlayMusic(-1);
     }
 
     return success;
@@ -108,7 +107,7 @@ std::vector<ThreatOb*> MakeThreatList(Map& map_data) {
         for (int x = 0; x < MAX_MAP_X; ++x) {
             int val = map_data.tile[y][x];
 
-            if (val == 6) {
+            if (val == 21) {
                 ThreatOb* p_threat = new ThreatOb();
 
                 p_threat->LoadImg("image/threat_Lv1_L .png", g_screen);
@@ -314,10 +313,6 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
     p_player.LoadImg("image/move-R.png", g_screen);
     p_player.set_clips();
 
-    PlayMoney player_money;
-    player_money.Init(g_screen);
-    player_money.SetPos(SCREEN_WIDTH * 0.5 - 300, 8);
-
     std::vector<ThreatOb*> list_threats = MakeThreatList(map_data);
 
     ExplosionOb exp_player;
@@ -337,6 +332,8 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 
     TextOb mark_game;
     mark_game.SetColor(TextOb::WHITE_TEXT);
+
+    g_sound_manager->PlayMusic(-1);
 
     UINT mark_value = 0;
     std::string strMark;
@@ -425,11 +422,6 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 
         game_map.SetMap(map_data);
         game_map.DrawMap(g_screen);
-
-
-
-
-        player_money.Show(g_screen);
 
 
         for (int i = 0; i < list_threats.size(); i++) {
@@ -763,7 +755,6 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        // PLAY GAME LOOP
         bool game_running = PlayGame(current_mark, menu, in_menu);
 
         if (!game_running) {

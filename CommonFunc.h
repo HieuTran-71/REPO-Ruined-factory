@@ -5,10 +5,12 @@
 #include <windows.h>
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <random>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
@@ -31,10 +33,10 @@ const int RENDER_DRAW_COLOR = 0xff;
 
 #define TILE_SIZE 64
 
-#define MAX_MAP_X 400
+#define MAX_MAP_X 200
 #define MAX_MAP_Y 10
 
-#define STATE_SUPPORT 4
+#define STATE_SUPPORT 11
 
 typedef struct Input
 {
@@ -55,7 +57,7 @@ typedef struct Map
     int max_y_;
 
     int tile[MAX_MAP_Y][MAX_MAP_X];
-    char* file_name;
+    std::string file_name;
 };
 
 
@@ -68,7 +70,7 @@ enum TileType
 
 };
 
-const int MAX_TILES = 10;
+const int MAX_TILES = 20;
 
 static const int tile_type_mapping[MAX_TILES] =
 {
@@ -76,12 +78,14 @@ static const int tile_type_mapping[MAX_TILES] =
     TILE_TYPE_SOLID, //1
     TILE_TYPE_SOLID, //2
     TILE_TYPE_SOLID, //3
-    TILE_TYPE_BLANK, //4
+    TILE_TYPE_SOLID, //4
     TILE_TYPE_SOLID, //5
     TILE_TYPE_SOLID, //6
     TILE_TYPE_SOLID, //7
     TILE_TYPE_SOLID, //8
     TILE_TYPE_SOLID, //9
+    TILE_TYPE_SOLID, //10
+    TILE_TYPE_BLANK  //11
 };
 
 

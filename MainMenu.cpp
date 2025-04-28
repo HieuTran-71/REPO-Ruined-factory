@@ -133,21 +133,6 @@ void MainMenu::ShowHighScoreBoard(SDL_Renderer* screen) {
         return;
     }
 
-    // Load background image for high score
-    BaseObject scoreBackground;
-    bool bgLoaded = scoreBackground.LoadImg("img/score_background.png", screen);
-    if (!bgLoaded) {
-        // Fallback if image doesn't exist
-        std::cerr << "Failed to load score background, using default" << std::endl;
-    }
-
-    // Create trophy icon
-    BaseObject trophyIcon;
-    bool trophyLoaded = trophyIcon.LoadImg("img/trophy.png", screen);
-
-    // Stars for decoration
-    BaseObject starIcon;
-    bool starLoaded = starIcon.LoadImg("img/star.png", screen);
 
     // Animation variables
     float animOffset = 0.0f;
@@ -178,19 +163,15 @@ void MainMenu::ShowHighScoreBoard(SDL_Renderer* screen) {
         SDL_SetRenderDrawColor(screen, 0, 0, 0, 255);
         SDL_RenderClear(screen);
 
-        // Render background
-        if (bgLoaded) {
-            scoreBackground.Render(screen);
-        } else {
-            // Gradient background if image not available
-            for (int y = 0; y < SCREEN_HEIGHT; y++) {
-                int r = 20 + (y * 40 / SCREEN_HEIGHT);
-                int g = 10 + (y * 20 / SCREEN_HEIGHT);
-                int b = 40 + (y * 60 / SCREEN_HEIGHT);
-                SDL_SetRenderDrawColor(screen, r, g, b, 255);
-                SDL_RenderDrawLine(screen, 0, y, SCREEN_WIDTH, y);
-            }
+        // Gradient background if image not available
+        for (int y = 0; y < SCREEN_HEIGHT; y++) {
+            int r = 20 + (y * 40 / SCREEN_HEIGHT);
+            int g = 10 + (y * 20 / SCREEN_HEIGHT);
+            int b = 40 + (y * 60 / SCREEN_HEIGHT);
+            SDL_SetRenderDrawColor(screen, r, g, b, 255);
+            SDL_RenderDrawLine(screen, 0, y, SCREEN_WIDTH, y);
         }
+
 
         // Decorative border
         SDL_Rect borderRect = {20, 20, SCREEN_WIDTH - 40, SCREEN_HEIGHT - 40};
@@ -245,12 +226,6 @@ void MainMenu::ShowHighScoreBoard(SDL_Renderer* screen) {
                     SDL_SetRenderDrawColor(screen, 205, 127, 50, 100); // Bronze
                 }
                 SDL_RenderDrawRect(screen, &highlightRect);
-
-                // Add trophy icon for top scores
-                if (trophyLoaded) {
-                    trophyIcon.SetRect(SCREEN_WIDTH / 2 - 235, startY);
-                    trophyIcon.Render(screen);
-                }
             }
 
             // Rank display
@@ -272,14 +247,6 @@ void MainMenu::ShowHighScoreBoard(SDL_Renderer* screen) {
 
             rank_item.LoadFromRenderText(scoreFont, screen);
             rank_item.RenderText(screen, SCREEN_WIDTH / 2 - 170, startY);
-
-            // Add star decorations for top scores
-            if (i < 3 && starLoaded) {
-                int starX = SCREEN_WIDTH / 2 - 120 + sin(currentTime/500.0f) * 5;
-                int starY = startY + 5 + (i == 0 ? animOffset : animOffset / 2.0f);
-                starIcon.SetRect(starX, starY);
-                starIcon.Render(screen);
-            }
 
             // Score display with box
             std::string score_text = std::to_string(high_scores_[i]);
@@ -339,21 +306,6 @@ void MainMenu::ShowHighScoreBoard(SDL_Renderer* screen) {
         note.SetColor(200, 200, 220);
         note.LoadFromRenderText(noteFont, screen);
         note.RenderText(screen, SCREEN_WIDTH / 2 - note.GetWidth()/2, SCREEN_HEIGHT - 50);
-
-        // Render stars in corners for decoration if available
-        if (starLoaded) {
-            starIcon.SetRect(30, 30);
-            starIcon.Render(screen);
-
-            starIcon.SetRect(SCREEN_WIDTH - 54, 30);
-            starIcon.Render(screen);
-
-            starIcon.SetRect(30, SCREEN_HEIGHT - 54);
-            starIcon.Render(screen);
-
-            starIcon.SetRect(SCREEN_WIDTH - 54, SCREEN_HEIGHT - 54);
-            starIcon.Render(screen);
-        }
 
         SDL_RenderPresent(screen);
 

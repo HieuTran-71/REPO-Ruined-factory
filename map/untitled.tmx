@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="200" height="10" tilewidth="64" tileheight="64" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="../../../Users/NITRO 5/Downloads/0.tsx"/>
+ <tileset firstgid="2" source="../../../Users/NITRO 5/Downloads/1.tsx"/>
+ <tileset firstgid="3" source="../../../Users/NITRO 5/Downloads/2.tsx"/>
+ <tileset firstgid="4" source="../../../Users/NITRO 5/Downloads/3.tsx"/>
+ <tileset firstgid="5" source="../../../Users/NITRO 5/Downloads/4.tsx"/>
+ <tileset firstgid="6" source="../../../Users/NITRO 5/Downloads/5.tsx"/>
+ <tileset firstgid="7" source="../../../Users/NITRO 5/Downloads/8.tsx"/>
+ <tileset firstgid="8" source="../../../Users/NITRO 5/Downloads/9.tsx"/>
+ <tileset firstgid="9" source="../../../Users/NITRO 5/Downloads/Frame_09.tsx"/>
+ <tileset firstgid="10" source="../../../Users/NITRO 5/Downloads/Frame_27.tsx"/>
+ <tileset firstgid="11" source="../../../Users/NITRO 5/Downloads/Frame_63.tsx"/>
+ <tileset firstgid="12" source="../../../Users/NITRO 5/Downloads/Frame_81.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="200" height="10">
+  <data encoding="base64" compression="zlib">
+   eJztl4sKwyAMRcV2r27//71rGYUgQaMzMW73QEBslaCemoYAfoHLHuvoJABwCvzwxU3YB2TcG8YspA0/fPAIn30540meLZn3uKBjZ+DMuxc5J2rXDX744NiHSILuSSTtbY9rIV4G+Xqj5Z5I4TyAHz6Q+tEC960cSa8cejhBgR92lGqgNGLQ8yOd+9v5LMitlRbwww7uTNZETz8kaJ7Dlvlya6MF58FRz/5jvarNbH6MvGM81HzAltn8KMGdYWlfCU81X21d7OWfbjbeyewCvw==
+  </data>
+ </layer>
+</map>
