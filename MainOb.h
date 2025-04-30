@@ -48,6 +48,19 @@ public:
     void set_comeback_time(const int& cb_time) {come_back_time_ = cb_time;}
     int GetMoney() const {return money_count;}
 
+    void SetXPos(const float& x_pos) { x_pos_ = x_pos; }
+    void SetYPos(const float& y_pos) { y_pos_ = y_pos; }
+    void SetMapX(const int& map_x) { map_x_ = map_x; }
+    void SetMapY(const int& map_y) { map_y_ = map_y; }
+    float GetXPos() const { return x_pos_; }
+    float GetYPos() const { return y_pos_; }
+
+    void SetPos(const float& x, const float& y)
+    {
+        x_pos_ = x;
+        y_pos_ = y;
+    }
+
 private:
     int money_count; // vat pham ho tro
 

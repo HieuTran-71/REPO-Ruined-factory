@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="200" height="10" tilewidth="64" tileheight="64" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="1.tsx"/>
+ <tileset firstgid="2" source="2.tsx"/>
+ <tileset firstgid="3" source="3.tsx"/>
+ <tileset firstgid="4" source="4.tsx"/>
+ <tileset firstgid="5" source="5.tsx"/>
+ <tileset firstgid="6" source="6.tsx"/>
+ <tileset firstgid="7" source="7.tsx"/>
+ <tileset firstgid="8" source="8.tsx"/>
+ <tileset firstgid="9" source="9.tsx"/>
+ <tileset firstgid="10" source="10.tsx"/>
+ <tileset firstgid="11" source="11.tsx"/>
+ <tileset firstgid="12" source="threat_Lv1_R.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="200" height="10">
+  <data encoding="base64" compression="zlib">
+   eJztmNsOwyAIhl3XHdru/Z93bVITQ8CCCmrjl3ChPWGVH8W5/tmQdmrfYHA3JtB+7/ZN7OPwS3hmMEghdY3W0P3D1ykwzG84Hmm7VXrXhN79lwJzhgWf3V6nzbs9kXtgv7RdgzWwEKgHV9rQItgYWvU9Vyutc0bMX6v4KK17MAZi/aEeQFvOe1o4v5X8R1bj0chn1jkjtnaPtbMw+qXtAy3dpvJEDv5dNbRLI6/Bf1PyG6VzmfXeHPr/cHX2PvP5bcxq78UoSseJ5XlhjZh0DmLj93qL5WGM1s6mUv81WF1+fGjkCS65caKVF1Kh5oHyC6ulaumtdc0htp/C5nsreD1cy5L4kJwnLLmKk17qSdQ8cPUKnuFy9Zbad3uDUDmI2x++MxYfuXVbSV2XGx818wSX0LeeakmeP2DEBl8=
+  </data>
+ </layer>
+</map>

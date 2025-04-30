@@ -5,6 +5,7 @@
 #include "BaseObject.h"
 
 #define MAX_TILES 20
+#define TILE_GATE 12
 
 class TileMat : public BaseObject
 {
@@ -19,7 +20,7 @@ public:
     GameMap(){;}
     ~GameMap(){;}
 
-    void LoadMap(char* name);
+    void LoadMap(const std::string& name);
     void LoadTiles(SDL_Renderer* Screen);
     void DrawMap(SDL_Renderer* screen);
     Map getMap() const {return game_map_;}; // lay ra map
@@ -32,4 +33,4 @@ private:
 
 
 
-#endif // GAME_MAP_H
+#endif

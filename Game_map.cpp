@@ -1,11 +1,10 @@
-
 #include "Game_map.h"
 
 
-void GameMap::LoadMap(char* name)
+void GameMap::LoadMap(const std::string& name)
 {
     FILE* fp = NULL;
-    fopen_s(&fp, name, "rb");
+    fopen_s(&fp, name.c_str(), "rb");
     if(fp == NULL)
     {
         return;

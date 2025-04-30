@@ -143,6 +143,46 @@ struct ExplosionInfo {
     ImpTimer timer;
 };
 
+std::vector<std::string> map_list = {
+    "map/map01.dat",
+    "map/map02.dat"
+
+};
+
+void ResetMap(GameMap& game_map, Map& map_data, std::vector<ThreatOb*>& list_threats, MainOb& p_player, SDL_Renderer* g_screen, const std::vector<std::string>& map_list)
+{
+    // Random chọn map
+    int rand_index = rand() % map_list.size();
+    std::string map_file = map_list[rand_index];
+
+    // Load map
+    game_map.LoadMap(map_file);
+    map_data = game_map.getMap();
+
+    // Load Tiles nếu cần
+    game_map.LoadTiles(g_screen);
+
+    p_player.SetMapXY(0, 0);
+    p_player.SetPos(0, 0);
+    p_player.set_comeback_time(0);
+
+    // Xoá threat cũ
+    for (int i = 0; i < list_threats.size(); ++i)
+    {
+        ThreatOb* p_threat = list_threats[i];
+        if (p_threat)
+        {
+            delete p_threat;
+            list_threats[i] = nullptr;
+        }
+    }
+    list_threats.clear();
+
+    // Tạo threat mới
+    list_threats = MakeThreatList(map_data);
+}
+
+
 std::vector<ExplosionInfo> active_explosions;
 
 GameOverResult ShowGameOverScreen(SDL_Renderer* renderer, MainMenu& menu, int& current_mark) {
@@ -305,8 +345,7 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 
     // Init lại game mỗi lần Play
     GameMap game_map;
-    game_map.LoadMap("map/map01.dat");
-    game_map.LoadTiles(g_screen);
+
     Map map_data = game_map.getMap();
 
     MainOb p_player;
@@ -314,6 +353,8 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
     p_player.set_clips();
 
     std::vector<ThreatOb*> list_threats = MakeThreatList(map_data);
+
+    ResetMap(game_map, map_data, list_threats, p_player, g_screen, map_list);
 
     ExplosionOb exp_player;
     exp_player.LoadImg("image/exp_bullet.png", g_screen);
@@ -355,13 +396,54 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
         SDL_Rect bg_rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
         g_background.Render(g_screen, &bg_rect); // nen luon duoc can chinh theo man hinh
 
-
         game_map.DrawMap(g_screen);
 
         p_player.HandleBullet(g_screen, map_data, g_screen, &exp_bullet_tile);
         p_player.SetMapXY(map_data.start_x_, map_data.start_y_);
         p_player.Do_Player(map_data);
         p_player.Show(g_screen, map_data);
+
+
+
+        SDL_Rect player_frame = p_player.GetRectFrame();
+        SDL_Rect player_rect = { static_cast<int>(p_player.GetXPos()), static_cast<int>(p_player.GetYPos()), player_frame.w, player_frame.h };
+
+        int start_x = player_rect.x / TILE_SIZE;
+        int end_x = (player_rect.x + player_rect.w - 1) / TILE_SIZE;
+        int start_y = player_rect.y / TILE_SIZE;
+        int end_y = (player_rect.y + player_rect.h - 1) / TILE_SIZE;
+
+        // Giới hạn trong bản đồ
+        start_x = std::max(0, start_x);
+        end_x = std::min(MAX_MAP_X - 1, end_x);
+        start_y = std::max(0, start_y);
+        end_y = std::min(MAX_MAP_Y - 1, end_y);
+
+        for (int y = start_y; y <= end_y; y++)
+        {
+            for (int x = start_x; x <= end_x; x++)
+            {
+                int tile_value = map_data.tile[y][x];
+
+                if (tile_value == TILE_GATE)
+                {
+                    SDL_Rect gate_rect;
+                    gate_rect.x = x * TILE_SIZE - map_data.start_x_;
+                    gate_rect.y = y * TILE_SIZE - map_data.start_y_;
+                    gate_rect.w = TILE_SIZE;
+                    gate_rect.h = TILE_SIZE;
+
+                    if (SDLCommonFunc::CheckCollision(player_rect, gate_rect))
+                    {
+                        ResetMap(game_map, map_data, list_threats, p_player, g_screen, map_list);
+                    }
+                }
+            }
+        }
+
+        next_frame:; // Label để nhảy tới sau khi chuyển map
+
+
 
         // Kiểm tra nếu nhân vật rơi xuống vực
         if (p_player.GetRect().y > map_data.max_y_) {
@@ -600,8 +682,6 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
             }
         }
 
-
-
         std::string str_time = "Time: ";
         Uint32 time_val = SDL_GetTicks() / 1000;
         Uint32 val_time = 0 + time_val;
@@ -709,6 +789,8 @@ int main(int argc, char* argv[]) {
     if (LoadBackground() == false) {
         return -1;
     }
+
+    srand(time(NULL));
 
     MainMenu menu;
     if (!menu.LoadMenu(g_screen)) {

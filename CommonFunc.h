@@ -7,6 +7,8 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -85,7 +87,8 @@ static const int tile_type_mapping[MAX_TILES] =
     TILE_TYPE_SOLID, //8
     TILE_TYPE_SOLID, //9
     TILE_TYPE_SOLID, //10
-    TILE_TYPE_BLANK  //11
+    TILE_TYPE_BLANK, //11
+    TILE_TYPE_SOLID  //12
 };
 
 

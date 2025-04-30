@@ -12,9 +12,10 @@
  <tileset firstgid="10" source="../../../Users/NITRO 5/Downloads/Frame_27.tsx"/>
  <tileset firstgid="11" source="../../../Users/NITRO 5/Downloads/Frame_63.tsx"/>
  <tileset firstgid="12" source="../../../Users/NITRO 5/Downloads/Frame_81.tsx"/>
+ <tileset firstgid="13" source="../../../Users/NITRO 5/Downloads/threat_Lv1_R.tsx"/>
  <layer id="1" name="Tile Layer 1" width="200" height="10">
   <data encoding="base64" compression="zlib">
-   eJztl4sKwyAMRcV2r27//71rGYUgQaMzMW73QEBslaCemoYAfoHLHuvoJABwCvzwxU3YB2TcG8YspA0/fPAIn30540meLZn3uKBjZ+DMuxc5J2rXDX744NiHSILuSSTtbY9rIV4G+Xqj5Z5I4TyAHz6Q+tEC960cSa8cejhBgR92lGqgNGLQ8yOd+9v5LMitlRbwww7uTNZETz8kaJ7Dlvlya6MF58FRz/5jvarNbH6MvGM81HzAltn8KMGdYWlfCU81X21d7OWfbjbeyewCvw==
+   eJztVwcKwzAMzGibNm3//93GlIAwGt6WHR8IMjw0ctZlngZ6wP2wW20nOsNcYI+NsIG00MiPK9cci5fLwTeXI53gKbzH8reCa438MLha3V/Tvy6nvcG7lRmHGZwLofWsMTFxPvuekxwnuPxhPmjjB+Y/lTtpnZB5tWDqsACDNVnA9X7YQ7BPAX+1QeoTJ+w8UzmH4zXxIxWouGprN6ovuvIjBFxvslEiJ75nF5UzV05AXIkfnAaLjStW30kayDauVrH8sHtOC/2F0kGxmqAFfsDYQ7WTlDcsLpd5oWOk793XUvLDBT49JmRtqWfZfYvSkbHc5vQptvaeYE+NyMl77gxKZaX5UbPHtPavaCDpizXyPjcGP9IC+4Zdn0nQqvFddEKOfuvrU8jetfnxA7ozBpM=
   </data>
  </layer>
 </map>
