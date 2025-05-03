@@ -42,7 +42,7 @@ bool MainOb::LoadImg(std::string path, SDL_Renderer *screen)
     return ret;
 }
 
-SDL_Rect MainOb::GetRectFrame()
+SDL_Rect MainOb::GetRectFrame() const
 {
     SDL_Rect rect;
     rect.x = rect_.x;
@@ -393,3 +393,15 @@ void MainOb::CheckToMap(Map& map_data)
 
 
 }
+
+SDL_Rect MainOb::GetCollisionBox() const
+{
+    SDL_Rect frame = GetRectFrame();
+    SDL_Rect collision_box;
+    collision_box.x = x_pos_ - map_x_;
+    collision_box.y = y_pos_ - map_y_;
+    collision_box.w = frame.w ;
+    collision_box.h = frame.h ;
+    return collision_box;
+}
+

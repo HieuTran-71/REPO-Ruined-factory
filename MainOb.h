@@ -35,7 +35,7 @@ public:
     void SetMapXY(const int map_x, const int map_y) {map_x_ = map_x; map_y_ = map_y;}
     void CenterEntityOnMap(Map& map_data); // ham xy ly thong so map khi di chuyen nhan vat
     void UpdateImagePlayer(SDL_Renderer* des); // xu li dan ban
-    SDL_Rect GetRectFrame();
+    SDL_Rect GetRectFrame() const;
 
     void set_bullet_list(std::vector<Bullet*> bullet_list)
     {
@@ -60,6 +60,8 @@ public:
         x_pos_ = x;
         y_pos_ = y;
     }
+
+    SDL_Rect GetCollisionBox() const;
 
 private:
     int money_count; // vat pham ho tro

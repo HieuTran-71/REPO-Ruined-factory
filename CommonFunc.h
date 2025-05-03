@@ -39,6 +39,7 @@ const int RENDER_DRAW_COLOR = 0xff;
 #define MAX_MAP_Y 10
 
 #define STATE_SUPPORT 11
+#define TILE_GATE 12
 
 typedef struct Input
 {
@@ -67,8 +68,6 @@ enum TileType
 {
     TILE_TYPE_BLANK = 0,
     TILE_TYPE_SOLID = 1,
-    TILE_TYPE_WATER = 2,
-    TILE_TYPE_SPIKE = 3,
 
 };
 

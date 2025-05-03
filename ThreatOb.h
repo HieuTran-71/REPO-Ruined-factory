@@ -40,7 +40,7 @@ public:
     void CheckToMap(Map& gMap);
     void set_type_move(const int& TypeMove) {type_move_ = TypeMove;}
     void SetAnimation(const int& pos_a, const int& pos_b) {animation_a_ = pos_a, animation_b_ = pos_b;}
-    void set_input_left(const int& ipLeft) {input_type_.left_ = ipLeft;};
+    void set_input_right(const int& ipRight) {input_type_.right_ = ipRight;};
     void ImpMoveType(SDL_Renderer* screen);
     SDL_Rect GetRectFrame();
 

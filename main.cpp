@@ -110,7 +110,7 @@ std::vector<ThreatOb*> MakeThreatList(Map& map_data) {
             if (val == 21) {
                 ThreatOb* p_threat = new ThreatOb();
 
-                p_threat->LoadImg("image/threat_Lv1_L .png", g_screen);
+                p_threat->LoadImg("image/threat_Lv1_R .png", g_screen);
                 p_threat->set_clips();
                 p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
 
@@ -120,10 +120,10 @@ std::vector<ThreatOb*> MakeThreatList(Map& map_data) {
                 p_threat->set_x_pos(pos_x);
                 p_threat->set_y_pos(pos_y);
 
-                int pos1 = pos_x - 200;
-                int pos2 = pos_x + 200;
+                int pos1 = pos_x - 150;
+                int pos2 = pos_x + 150;
                 p_threat->SetAnimation(pos1, pos2);
-                p_threat->set_input_left(1);
+                p_threat->set_input_right(1);
 
                 list_threats.push_back(p_threat);
 
@@ -143,23 +143,79 @@ struct ExplosionInfo {
     ImpTimer timer;
 };
 
+int current_map_index = 0;
 std::vector<std::string> map_list = {
     "map/map01.dat",
-    "map/map02.dat"
+    "map/map02.dat",
+    "map/map03.dat",
+    "map/map04.dat"
 
 };
 
-void ResetMap(GameMap& game_map, Map& map_data, std::vector<ThreatOb*>& list_threats, MainOb& p_player, SDL_Renderer* g_screen, const std::vector<std::string>& map_list)
+void LoadNextMap(GameMap& game_map, Map& map_data, std::vector<ThreatOb*>& list_threats,
+                 MainOb& p_player, SDL_Renderer* g_screen, int& current_map_index,
+                 const std::vector<std::string>& map_list)
 {
-    // Random chọn map
-    int rand_index = rand() % map_list.size();
-    std::string map_file = map_list[rand_index];
+    if (map_list.size() <= 1) {
+        return;
+    }
+
+    int old_map_index = current_map_index;
+    int new_map_index;
+    do {
+        new_map_index = rand() % map_list.size();
+    } while (new_map_index == old_map_index);
+
+    current_map_index = new_map_index;
+    std::string next_map_file = map_list[current_map_index];
+
+    // Load lại map mới
+    game_map.LoadMap(next_map_file);
+    map_data = game_map.getMap();
+
+    // Reset vị trí bắt đầu map
+    map_data.start_x_ = 0;
+    map_data.start_y_ = 0;
+
+    game_map.LoadTiles(g_screen);
+
+    // Reset player
+    p_player.SetMapXY(0, 0);
+    p_player.SetPos(0, 0);
+    p_player.set_comeback_time(0);
+
+    // Xóa threats cũ
+    for (auto& p_threat : list_threats) {
+        if (p_threat) {
+            delete p_threat;
+            p_threat = nullptr;
+        }
+    }
+    list_threats.clear();
+
+    // Tạo threats mới
+    list_threats = MakeThreatList(map_data);
+
+}
+
+
+
+
+
+void ResetMap(GameMap& game_map, Map& map_data, std::vector<ThreatOb*>& list_threats,
+             MainOb& p_player, SDL_Renderer* g_screen, const std::vector<std::string>& map_list,
+             int& current_map_index)
+{
+    // Reset về map đầu tiên
+    current_map_index = 0;
+    std::string map_file = map_list[current_map_index];
+
 
     // Load map
     game_map.LoadMap(map_file);
     map_data = game_map.getMap();
 
-    // Load Tiles nếu cần
+    // Load Tiles
     game_map.LoadTiles(g_screen);
 
     p_player.SetMapXY(0, 0);
@@ -180,6 +236,7 @@ void ResetMap(GameMap& game_map, Map& map_data, std::vector<ThreatOb*>& list_thr
 
     // Tạo threat mới
     list_threats = MakeThreatList(map_data);
+
 }
 
 
@@ -352,9 +409,10 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
     p_player.LoadImg("image/move-R.png", g_screen);
     p_player.set_clips();
 
+
     std::vector<ThreatOb*> list_threats = MakeThreatList(map_data);
 
-    ResetMap(game_map, map_data, list_threats, p_player, g_screen, map_list);
+    ResetMap(game_map, map_data, list_threats, p_player, g_screen, map_list, current_map_index);
 
     ExplosionOb exp_player;
     exp_player.LoadImg("image/exp_bullet.png", g_screen);
@@ -378,6 +436,9 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 
     UINT mark_value = 0;
     std::string strMark;
+
+    int current_map_index = 0;
+    bool gate_collision_handled = false;
 
     while (!is_quit) {
         fps_timer.start();
@@ -405,44 +466,35 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 
 
 
-        SDL_Rect player_frame = p_player.GetRectFrame();
-        SDL_Rect player_rect = { static_cast<int>(p_player.GetXPos()), static_cast<int>(p_player.GetYPos()), player_frame.w, player_frame.h };
+        SDL_Rect player_hitbox = p_player.GetCollisionBox();
+        SDL_SetRenderDrawColor(g_screen, 255, 0, 0, 255);
+        SDL_RenderDrawRect(g_screen, &player_hitbox);
 
-        int start_x = player_rect.x / TILE_SIZE;
-        int end_x = (player_rect.x + player_rect.w - 1) / TILE_SIZE;
-        int start_y = player_rect.y / TILE_SIZE;
-        int end_y = (player_rect.y + player_rect.h - 1) / TILE_SIZE;
-
-        // Giới hạn trong bản đồ
-        start_x = std::max(0, start_x);
-        end_x = std::min(MAX_MAP_X - 1, end_x);
-        start_y = std::max(0, start_y);
-        end_y = std::min(MAX_MAP_Y - 1, end_y);
-
-        for (int y = start_y; y <= end_y; y++)
+        for (int y = 0; y < MAX_MAP_Y; y++)
         {
-            for (int x = start_x; x <= end_x; x++)
+            for (int x = 0; x < MAX_MAP_X; x++)
             {
-                int tile_value = map_data.tile[y][x];
-
-                if (tile_value == TILE_GATE)
+                if (map_data.tile[y][x] == TILE_GATE)
                 {
-                    SDL_Rect gate_rect;
-                    gate_rect.x = x * TILE_SIZE - map_data.start_x_;
-                    gate_rect.y = y * TILE_SIZE - map_data.start_y_;
-                    gate_rect.w = TILE_SIZE;
-                    gate_rect.h = TILE_SIZE;
+                    SDL_Rect gate_rect = {x * TILE_SIZE - map_data.start_x_, y * TILE_SIZE - map_data.start_y_, TILE_SIZE, TILE_SIZE};
+                    SDL_Rect expanded_gate = {gate_rect.x - 5, gate_rect.y - 5, gate_rect.w + 10, gate_rect.h + 10};
 
-                    if (SDLCommonFunc::CheckCollision(player_rect, gate_rect))
+                    SDL_SetRenderDrawColor(g_screen, 0, 255, 0, 255);
+                    SDL_RenderDrawRect(g_screen, &gate_rect);
+
+                    if (SDLCommonFunc::CheckCollision(player_hitbox, expanded_gate))
                     {
-                        ResetMap(game_map, map_data, list_threats, p_player, g_screen, map_list);
+                        mark_value += 1000;
+                        current_mark = mark_value;
+                        gate_collision_handled = false;
+
+                        LoadNextMap(game_map, map_data, list_threats, p_player, g_screen, current_map_index, map_list);
+
+                        break;
                     }
                 }
             }
         }
-
-        next_frame:; // Label để nhảy tới sau khi chuyển map
-
 
 
         // Kiểm tra nếu nhân vật rơi xuống vực
@@ -526,7 +578,6 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
                     exp.from_bullet = false;
                     exp.timer.start();
 
-                    g_sound_manager->StopMusic();
                     g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
                     // Tạo một vòng lặp để chỉ hiển thị hiệu ứng nổ
@@ -550,7 +601,7 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
                         SDL_RenderPresent(g_screen);
                         SDL_Delay(20); // Giữ tốc độ ổn định
                     }
-
+                    g_sound_manager->StopMusic();
                     // Phát nhạc game over sau khi hiệu ứng nổ hoàn thành
                     g_sound_manager->PlaySoundA(SOUND_GAMEOVER);
 
@@ -631,7 +682,7 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
                                     exp.from_bullet = true;
                                     exp.timer.start();
                                     active_explosions.push_back(exp);
-                                    g_sound_manager->StopMusic();
+
                                     g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
 
@@ -668,7 +719,7 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
                             exp.from_bullet = true;
                             exp.timer.start();
                             active_explosions.push_back(exp);
-                            g_sound_manager->StopMusic();
+
                             g_sound_manager->PlaySoundA(SOUND_EXPLOSION);
 
 
@@ -752,6 +803,7 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 }
 
 int main(int argc, char* argv[]) {
+
     if (InitData() == false) {
         return -1;
     }

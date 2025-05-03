@@ -5,7 +5,6 @@
 #include "BaseObject.h"
 
 #define MAX_TILES 20
-#define TILE_GATE 12
 
 class TileMat : public BaseObject
 {
