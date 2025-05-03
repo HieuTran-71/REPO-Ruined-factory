@@ -63,6 +63,16 @@ public:
 
     SDL_Rect GetCollisionBox() const;
 
+    void SetMarkValuePtr(UINT* mark_value) {
+        mark_value_ptr_ = mark_value;
+    }
+
+    void AddScore(UINT value) {
+        if (mark_value_ptr_ != nullptr) {
+            *mark_value_ptr_ += value;
+        }
+    }
+
 private:
     int money_count; // vat pham ho tro
 
@@ -90,6 +100,8 @@ private:
     const int max_jump_ = 2; // Số lần nhảy tối đa (2 lần)
 
     int come_back_time_;
+
+    UINT* mark_value_ptr_;
 
 
 };

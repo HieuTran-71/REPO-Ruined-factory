@@ -209,19 +209,26 @@ void ThreatOb::ImpMoveType(SDL_Renderer* screen)
     }
     else
     {
-        if (on_ground_ = true)
+        if (on_ground_)
         {
             if (x_pos_ > animation_b_)
             {
                 input_type_.left_ = 1;
                 input_type_.right_ = 0;
-                LoadImg("image/threat_Lv1_L .png", screen);
+                if (get_level() == 1)
+                    LoadImg("image/threat_Lv1_L.png", screen);
+                else if (get_level() == 2)
+                    LoadImg("image/threat_Lv2_L.png", screen);
             }
             else if (x_pos_ < animation_a_)
             {
                 input_type_.left_ = 0;
                 input_type_.right_ = 1;
-                LoadImg("image/threat_Lv1_R .png", screen);
+                if (get_level() == 1)
+                    LoadImg("image/threat_Lv1_R.png", screen);
+                else if (get_level() == 2)
+                    LoadImg("image/threat_Lv2_R.png", screen);
+
             }
         }
     }

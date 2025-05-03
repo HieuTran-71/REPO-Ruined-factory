@@ -44,8 +44,12 @@ public:
     void ImpMoveType(SDL_Renderer* screen);
     SDL_Rect GetRectFrame();
 
+    void set_level(int lv) { level_ = lv; }
+    int get_level() const { return level_; }
+
 private:
 
+    int level_;
     int map_x_;
     int map_y_;
     float y_val_;

@@ -19,6 +19,20 @@ SDL_Texture* g_current_background = nullptr;
 SDL_Texture* g_game_background = nullptr; // Để lưu background của game
 SDL_Texture* g_menu_background = nullptr; // Để lưu background của menu
 
+// Background layers
+SDL_Texture* g_layer1 = nullptr;
+SDL_Texture* g_layer2 = nullptr;
+SDL_Texture* g_layer3 = nullptr;
+SDL_Texture* g_layer4 = nullptr;
+SDL_Texture* g_layer5 = nullptr;
+
+// Background positions
+float g_layer1_x = 0;
+float g_layer2_x = 0;
+float g_layer3_x = 0;
+float g_layer4_x = 0;
+float g_layer5_x = 0;
+
 bool InitData() {
     bool success = true;
     int ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
@@ -69,12 +83,32 @@ bool InitData() {
     return success;
 }
 
-bool LoadBackground() {
-    return g_background.LoadImg("image/background.png", g_screen);
+bool LoadBackground()
+{
+    g_layer1 = IMG_LoadTexture(g_screen, "image/1.png");
+    g_layer2 = IMG_LoadTexture(g_screen, "image/2.png");
+    g_layer3 = IMG_LoadTexture(g_screen, "image/3.png");
+    g_layer4 = IMG_LoadTexture(g_screen, "image/4.png");
+    g_layer5 = IMG_LoadTexture(g_screen, "image/5.png");
+
+    if (!g_layer1 || !g_layer2 || !g_layer3 || !g_layer4 || !g_layer5)
+    {
+        SDL_Log("Failed to load one or more background layers: %s", IMG_GetError());
+        return false;
+    }
+
+    return true;
 }
+
 
 void close() {
     g_background.Free();
+
+    if (g_layer1) { SDL_DestroyTexture(g_layer1); g_layer1 = nullptr; }
+    if (g_layer2) { SDL_DestroyTexture(g_layer2); g_layer2 = nullptr; }
+    if (g_layer3) { SDL_DestroyTexture(g_layer3); g_layer3 = nullptr; }
+    if (g_layer4) { SDL_DestroyTexture(g_layer4); g_layer4 = nullptr; }
+    if (g_layer5) { SDL_DestroyTexture(g_layer5); g_layer5 = nullptr; }
 
 
     if (font_time != NULL) {
@@ -99,34 +133,96 @@ void close() {
     SDL_Quit();
 }
 
+void RenderBackground()
+{
+    if (g_current_background != nullptr && g_screen != nullptr)
+    {
+        SDL_RenderCopy(g_screen, g_current_background, NULL, NULL);
+    }
+    // Update layer positions
+    g_layer1_x -= 0.2f;
+    g_layer2_x -= 0.5f;
+    g_layer3_x -= 1.0f;
+    g_layer4_x -= 2.0f;
+    g_layer5_x -= 3.0f;
 
-std::vector<ThreatOb*> MakeThreatList(Map& map_data) {
+    // Wrap around
+    if (g_layer1_x <= -SCREEN_WIDTH) g_layer1_x = 0;
+    if (g_layer2_x <= -SCREEN_WIDTH) g_layer2_x = 0;
+    if (g_layer3_x <= -SCREEN_WIDTH) g_layer3_x = 0;
+    if (g_layer4_x <= -SCREEN_WIDTH) g_layer4_x = 0;
+    if (g_layer5_x <= -SCREEN_WIDTH) g_layer5_x = 0;
+
+    SDL_Rect rect1 = { (int)g_layer1_x, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_Rect rect1_next = { (int)g_layer1_x + SCREEN_WIDTH, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
+    SDL_Rect rect2 = { (int)g_layer2_x, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_Rect rect2_next = { (int)g_layer2_x + SCREEN_WIDTH, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
+    SDL_Rect rect3 = { (int)g_layer3_x, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_Rect rect3_next = { (int)g_layer3_x + SCREEN_WIDTH, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
+    SDL_Rect rect4 = { (int)g_layer4_x, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_Rect rect4_next = { (int)g_layer4_x + SCREEN_WIDTH, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
+    SDL_Rect rect5 = { (int)g_layer5_x, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_Rect rect5_next = { (int)g_layer5_x + SCREEN_WIDTH, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
+    // Render layers từ xa đến gần
+    SDL_RenderCopy(g_screen, g_layer1, NULL, &rect1);
+    SDL_RenderCopy(g_screen, g_layer1, NULL, &rect1_next);
+
+    SDL_RenderCopy(g_screen, g_layer2, NULL, &rect2);
+    SDL_RenderCopy(g_screen, g_layer2, NULL, &rect2_next);
+
+    SDL_RenderCopy(g_screen, g_layer3, NULL, &rect3);
+    SDL_RenderCopy(g_screen, g_layer3, NULL, &rect3_next);
+
+    SDL_RenderCopy(g_screen, g_layer4, NULL, &rect4);
+    SDL_RenderCopy(g_screen, g_layer4, NULL, &rect4_next);
+
+    SDL_RenderCopy(g_screen, g_layer5, NULL, &rect5);
+    SDL_RenderCopy(g_screen, g_layer5, NULL, &rect5_next);
+}
+
+
+
+std::vector<ThreatOb*> MakeThreatList(Map& map_data)
+{
     std::vector<ThreatOb*> list_threats;
 
-    for (int y = 0; y < MAX_MAP_Y; ++y) {
-        for (int x = 0; x < MAX_MAP_X; ++x) {
+    for (int y = 0; y < MAX_MAP_Y; ++y)
+    {
+        for (int x = 0; x < MAX_MAP_X; ++x)
+        {
             int val = map_data.tile[y][x];
 
-            if (val == 21) {
+            if (val == 21 || val == 22)
+            {
                 ThreatOb* p_threat = new ThreatOb();
-
-                p_threat->LoadImg("image/threat_Lv1_R .png", g_screen);
-                p_threat->set_clips();
-                p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
 
                 int pos_x = x * TILE_SIZE;
                 int pos_y = y * TILE_SIZE;
 
                 p_threat->set_x_pos(pos_x);
                 p_threat->set_y_pos(pos_y);
-
-                int pos1 = pos_x - 150;
-                int pos2 = pos_x + 150;
-                p_threat->SetAnimation(pos1, pos2);
+                p_threat->set_type_move(ThreatOb::MOVE_IN_SPACE);
+                p_threat->SetAnimation(pos_x - 150, pos_x + 150);
                 p_threat->set_input_right(1);
 
-                list_threats.push_back(p_threat);
+                if (val == 21)
+                {
+                    p_threat->set_level(1);
+                    p_threat->LoadImg("image/threat_Lv1_R.png", g_screen);
+                }
+                else if (val == 22)
+                {
+                    p_threat->set_level(2);
+                    p_threat->LoadImg("image/threat_Lv2_R.png", g_screen);
+                }
 
+                p_threat->set_clips();
+                list_threats.push_back(p_threat);
 
                 map_data.tile[y][x] = 0;
             }
@@ -435,9 +531,8 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
     g_sound_manager->PlayMusic(-1);
 
     UINT mark_value = 0;
-    std::string strMark;
+    p_player.SetMarkValuePtr(&mark_value);
 
-    int current_map_index = 0;
     bool gate_collision_handled = false;
 
     while (!is_quit) {
@@ -454,8 +549,7 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
         SDL_SetRenderDrawColor(g_screen, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR);
         SDL_RenderClear(g_screen);
 
-        SDL_Rect bg_rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-        g_background.Render(g_screen, &bg_rect); // nen luon duoc can chinh theo man hinh
+        RenderBackground();
 
         game_map.DrawMap(g_screen);
 
@@ -467,8 +561,6 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 
 
         SDL_Rect player_hitbox = p_player.GetCollisionBox();
-        SDL_SetRenderDrawColor(g_screen, 255, 0, 0, 255);
-        SDL_RenderDrawRect(g_screen, &player_hitbox);
 
         for (int y = 0; y < MAX_MAP_Y; y++)
         {
@@ -711,7 +803,7 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 
                         if (bCol1)
                         {
-                            mark_value++;
+                            mark_value+= 100;
                             ExplosionInfo exp;
                             exp.x = p_bullet->GetRect().x - frame_exp_width * 0.07;
                             exp.y = p_bullet->GetRect().y - frame_exp_height * 0.25;
@@ -784,7 +876,7 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
             }
         }
 
-
+        current_mark = mark_value;
 
         SDL_RenderPresent(g_screen);
 
@@ -802,23 +894,11 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
     return true;
 }
 
+
+
 int main(int argc, char* argv[]) {
 
     if (InitData() == false) {
-        return -1;
-    }
-
-    // Load background game
-    SDL_Surface* game_bg_surface = IMG_Load("image/background.png");
-    if (!game_bg_surface) {
-        SDL_Log("IMG_Load: %s\n", IMG_GetError());
-        return -1;
-    }
-    g_game_background = SDL_CreateTextureFromSurface(g_screen, game_bg_surface);
-    SDL_FreeSurface(game_bg_surface);
-
-    if (!g_game_background) {
-        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
         return -1;
     }
 
@@ -881,6 +961,7 @@ int main(int argc, char* argv[]) {
             }
 
             SDL_RenderClear(g_screen);
+            RenderBackground();
             menu.Render(g_screen);
             SDL_RenderPresent(g_screen);
         }
@@ -888,6 +969,8 @@ int main(int argc, char* argv[]) {
         if (quit_program) {
             break;
         }
+
+        g_current_background = g_game_background;
 
         bool game_running = PlayGame(current_mark, menu, in_menu);
 

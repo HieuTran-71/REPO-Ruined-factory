@@ -22,6 +22,7 @@ MainOb::MainOb()
     jump_count_ = 0;
     come_back_time_ = 0;
     money_count = 0;
+    mark_value_ptr_ = NULL;
 }
 
 MainOb::~MainOb()
@@ -71,6 +72,7 @@ void MainOb::set_clips()
 void MainOb::IncreaseSp()
 {
     money_count++;
+    AddScore(20);
 }
 
 void MainOb::Show(SDL_Renderer* des, Map& map_data)
@@ -302,6 +304,7 @@ void MainOb::CheckToMap(Map& map_data)
                 map_data.tile[y2][x2] = 0;
                 g_sound_manager->PlaySoundA(SOUND_COLLECT);
                 IncreaseSp();
+
             }
             else
             {
@@ -324,6 +327,7 @@ void MainOb::CheckToMap(Map& map_data)
                 map_data.tile[y2][x1] = 0;
                 g_sound_manager->PlaySoundA(SOUND_COLLECT);
                 IncreaseSp();
+
             }
             else
             {
@@ -359,6 +363,7 @@ void MainOb::CheckToMap(Map& map_data)
                 map_data.tile[y2][x2] = 0;
                 g_sound_manager->PlaySoundA(SOUND_COLLECT);
                 IncreaseSp();
+
             }
             else
             {
