@@ -495,6 +495,8 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
 {
     ImpTimer fps_timer;
     bool is_quit = false;
+    bool show_tutorial = true;
+
 
     // Init lại game mỗi lần Play
     GameMap game_map;
@@ -542,9 +544,19 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
                 is_quit = true;
             }
 
-            p_player.HandelInputAction(g_event, g_screen);
-
+            if (show_tutorial)
+            {
+                if (g_event.type == SDL_KEYDOWN || g_event.type == SDL_MOUSEBUTTONDOWN)
+                {
+                    show_tutorial = false;
+                }
+            }
+            else
+            {
+                p_player.HandelInputAction(g_event, g_screen);
+            }
         }
+
 
         SDL_SetRenderDrawColor(g_screen, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR, RENDER_DRAW_COLOR);
         SDL_RenderClear(g_screen);
@@ -557,6 +569,29 @@ bool PlayGame(int &current_mark, MainMenu& menu, bool& in_menu)
         p_player.SetMapXY(map_data.start_x_, map_data.start_y_);
         p_player.Do_Player(map_data);
         p_player.Show(g_screen, map_data);
+
+        if (show_tutorial)
+        {
+            SDL_SetRenderDrawBlendMode(g_screen, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(g_screen, 0, 0, 0, 150);
+            SDL_Rect overlay = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+            SDL_RenderFillRect(g_screen, &overlay);
+
+            SDL_Color textColor = {255, 255, 255};
+
+            TextOb tutorial_text1;
+            tutorial_text1.SetColor(TextOb::WHITE_TEXT);
+            tutorial_text1.SetText("Space: Jump");
+            tutorial_text1.LoadFromRenderText(font_time, g_screen);
+            tutorial_text1.RenderText(g_screen, SCREEN_WIDTH/2 - 300, SCREEN_HEIGHT/2 - 100);
+
+            TextOb tutorial_text2;
+            tutorial_text2.SetColor(TextOb::WHITE_TEXT);
+            tutorial_text2.SetText("Mouse Left: Shoot");
+            tutorial_text2.LoadFromRenderText(font_time, g_screen);
+            tutorial_text2.RenderText(g_screen, SCREEN_WIDTH/2 - 350, SCREEN_HEIGHT/2 - 50);
+        }
+
 
 
 
