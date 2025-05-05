@@ -37,7 +37,7 @@ bool MainMenu::LoadMenu(SDL_Renderer* screen) {
     background_.LoadImg("image/menu_background.png", screen);
 
     // Nạp font
-    font_ = TTF_OpenFont("font/CyberpunkCraftpixPixel.otf", 28);
+    font_ = TTF_OpenFont("font/CyberpunkCraftpixPixel.otf", 36);
     if (font_ == nullptr) {
         std::cerr << "Không thể tải font: " << TTF_GetError() << std::endl;
         return false; // Trả về false nếu không tải được font
@@ -323,152 +323,126 @@ void MainMenu::ShowHighScoreBoard(SDL_Renderer* screen) {
 void MainMenu::Render(SDL_Renderer* screen) {
     background_.Render(screen, nullptr);
 
-    // Vị trí tiêu đề
-    int title_y = 100;
-
-    // Hiển thị tiêu đề với khung
+    // Hiển thị tiêu đề
     TextOb title_text;
-    title_text.SetText("R.O.B.O : Ruined Factory");
+    title_text.SetText("R.O.B.O: Ruined Factory");
     title_text.SetColor(TextOb::WHITE_TEXT);
     title_text.SetFont(font_);
     title_text.LoadFromRenderText(font_, screen);
 
-    // Tính toán khung cho tiêu đề
     int title_x = SCREEN_WIDTH / 2 - title_text.GetWidth() / 2;
+    int title_y = 80;
+
+    // Khung tiêu đề
     SDL_Rect title_frame = {
         title_x - 20,
-        title_y - 15,
+        title_y - 20,
         title_text.GetWidth() + 40,
-        title_text.GetHeight() + 30
+        title_text.GetHeight() + 40
     };
 
-    // Vẽ nền cho khung tiêu đề
-    SDL_SetRenderDrawColor(screen, 0, 0, 80, 200); // Màu xanh đậm, hơi trong suốt
     SDL_SetRenderDrawBlendMode(screen, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(screen, 0, 0, 100, 180); // Xanh đậm + trong suốt
     SDL_RenderFillRect(screen, &title_frame);
 
-    // Vẽ khung tiêu đề
-    SDL_SetRenderDrawColor(screen, 255, 255, 255, 255); // Màu trắng
+    SDL_SetRenderDrawColor(screen, 255, 255, 255, 255);
     SDL_RenderDrawRect(screen, &title_frame);
 
-    // Render text tiêu đề
     title_text.RenderText(screen, title_x, title_y);
 
-    // Tính toán chiều rộng khung tối đa cho các tùy chọn
-    int max_option_width = 0;
-    for (const auto& option : options_) {
-        TextOb temp_text;
-        temp_text.SetText(option);
-        temp_text.SetFont(font_);
-        temp_text.LoadFromRenderText(font_, screen);
-        if (temp_text.GetWidth() > max_option_width) {
-            max_option_width = temp_text.GetWidth();
-        }
+    // Render Options
+    int option_start_y = title_y + 150;
+    int space_between_options = 70;
+
+    int max_width = 0;
+    for (const auto& opt : options_) {
+        TextOb temp;
+        temp.SetText(opt);
+        temp.SetFont(font_);
+        temp.LoadFromRenderText(font_, screen);
+        max_width = std::max(max_width, temp.GetWidth());
     }
-    max_option_width += 30;
+    max_width += 40;
 
-    // Options
-    int option_start_y = title_y + 120;
     for (size_t i = 0; i < options_.size(); ++i) {
-        TextOb option_text;
-        option_text.SetText(options_[i]);
-        option_text.SetFont(font_);
+        TextOb opt_text;
+        opt_text.SetText(options_[i]);
+        opt_text.SetFont(font_);
+        opt_text.SetColor(i == selected_index_ ? TextOb::RED_TEXT : TextOb::WHITE_TEXT);
+        opt_text.LoadFromRenderText(font_, screen);
 
-        // Màu text tùy thuộc vào lựa chọn
-        if (i == selected_index_) {
-            option_text.SetColor(TextOb::RED_TEXT);
-        } else {
-            option_text.SetColor(TextOb::WHITE_TEXT);
-        }
+        int opt_x = SCREEN_WIDTH / 2 - opt_text.GetWidth() / 2;
+        int opt_y = option_start_y + i * space_between_options;
 
-        option_text.LoadFromRenderText(font_, screen);
-
-        int option_y = option_start_y + i * 60;
-        int option_x = SCREEN_WIDTH / 2 - option_text.GetWidth() / 2;
-
-        // Vẽ khung cho tùy chọn với chiều rộng đồng nhất
-        SDL_Rect option_frame = {
-            SCREEN_WIDTH / 2 - max_option_width / 2,
-            option_y - 10,
-            max_option_width,
-            option_text.GetHeight() + 20
+        SDL_Rect option_rect = {
+            SCREEN_WIDTH / 2 - max_width / 2,
+            opt_y - 10,
+            max_width,
+            opt_text.GetHeight() + 20
         };
 
-        // Đổ màu nền cho tùy chọn
         if (i == selected_index_) {
-            // Nền màu đỏ nhạt cho tùy chọn được chọn
-            SDL_SetRenderDrawColor(screen, 100, 0, 0, 180);
+            SDL_SetRenderDrawColor(screen, 120, 20, 20, 200); // Nền đỏ nhạt nếu hover
         } else {
-            // Nền tối cho các tùy chọn khác
-            SDL_SetRenderDrawColor(screen, 20, 20, 60, 180);
+            SDL_SetRenderDrawColor(screen, 30, 30, 60, 150); // Nền tối
         }
-        SDL_RenderFillRect(screen, &option_frame);
+        SDL_RenderFillRect(screen, &option_rect);
 
-        // Vẽ viền cho tất cả các tùy chọn (kiểu dáng giống nhau)
-        SDL_SetRenderDrawColor(screen, 255, 255, 255, 255); // Màu trắng
-        SDL_RenderDrawRect(screen, &option_frame);
+        SDL_SetRenderDrawColor(screen, 255, 255, 255, 255);
+        SDL_RenderDrawRect(screen, &option_rect);
 
-        // Render text ở giữa khung
-        option_text.RenderText(screen, option_x, option_y);
+        opt_text.RenderText(screen, opt_x, opt_y);
     }
 
-     if (game_over_ && game_over_texture_ != nullptr) { // Kiểm tra nếu game_over_ là true và texture tồn tại
-        // Vẽ cửa sổ Game Over
-        SDL_Rect destRect;
-        destRect.x = (SCREEN_WIDTH - GAME_OVER_WIDTH) / 2;
-        destRect.y = (SCREEN_HEIGHT - GAME_OVER_HEIGHT) / 2;
-        destRect.w = GAME_OVER_WIDTH;
-        destRect.h = GAME_OVER_HEIGHT;
+    // Nếu Game Over, vẽ cửa sổ Game Over
+    if (game_over_ && game_over_texture_ != nullptr) {
+        SDL_SetRenderDrawBlendMode(screen, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(screen, 0, 0, 0, 150); // Overlay mờ nền
+        SDL_Rect full_screen = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+        SDL_RenderFillRect(screen, &full_screen);
+
+        SDL_Rect destRect = {
+            (SCREEN_WIDTH - GAME_OVER_WIDTH) / 2,
+            (SCREEN_HEIGHT - GAME_OVER_HEIGHT) / 2,
+            GAME_OVER_WIDTH,
+            GAME_OVER_HEIGHT
+        };
         SDL_RenderCopy(screen, game_over_texture_, NULL, &destRect);
 
-        // Vẽ nút "Exit" màu đỏ
-        SDL_Rect exitButtonRect = {
-            destRect.x + EXIT_BUTTON_X,
-            destRect.y + BUTTON_Y,
-            BUTTON_WIDTH,
-            BUTTON_HEIGHT
+        // Nút Exit
+        SDL_Rect exit_btn = {
+            destRect.x + 50,
+            destRect.y + destRect.h - 80,
+            120, 50
         };
-        SDL_SetRenderDrawColor(screen, 255, 0, 0, 255); // Màu đỏ
-        SDL_RenderFillRect(screen, &exitButtonRect);
+        SDL_SetRenderDrawColor(screen, 200, 0, 0, 255);
+        SDL_RenderFillRect(screen, &exit_btn);
 
-        // Vẽ chữ "Exit" lên nút
-        TextOb exitText;
-        exitText.SetText("Exit");
-        exitText.SetColor(TextOb::WHITE_TEXT);
-        exitText.SetFont(font_);
-        exitText.LoadFromRenderText(font_, screen);
-        exitText.RenderText(screen, exitButtonRect.x + (BUTTON_WIDTH - exitText.GetWidth()) / 2, exitButtonRect.y + (BUTTON_HEIGHT - exitText.GetHeight()) / 2);
+        TextOb exit_text;
+        exit_text.SetText("Exit");
+        exit_text.SetFont(font_);
+        exit_text.SetColor(TextOb::WHITE_TEXT);
+        exit_text.LoadFromRenderText(font_, screen);
+        exit_text.RenderText(screen, exit_btn.x + (exit_btn.w - exit_text.GetWidth()) / 2, exit_btn.y + (exit_btn.h - exit_text.GetHeight()) / 2);
 
-        // Vẽ nút "Continue" màu xanh lá cây
-        SDL_Rect continueButtonRect = {
-            destRect.x + CONTINUE_BUTTON_X,
-            destRect.y + BUTTON_Y,
-            BUTTON_WIDTH,
-            BUTTON_HEIGHT
+        // Nút Continue
+        SDL_Rect continue_btn = {
+            destRect.x + destRect.w - 170,
+            destRect.y + destRect.h - 80,
+            120, 50
         };
-        SDL_SetRenderDrawColor(screen, 0, 255, 0, 255); // Màu xanh lá cây
-        SDL_RenderFillRect(screen, &continueButtonRect);
+        SDL_SetRenderDrawColor(screen, 0, 200, 0, 255);
+        SDL_RenderFillRect(screen, &continue_btn);
 
-        // Vẽ chữ "Continue" lên nút
-        TextOb continueText;
-        continueText.SetText("Continue");
-        continueText.SetColor(TextOb::WHITE_TEXT);
-        continueText.SetFont(font_);
-        continueText.LoadFromRenderText(font_, screen);
-        continueText.RenderText(screen, continueButtonRect.x + (BUTTON_WIDTH - continueText.GetWidth()) / 2, continueButtonRect.y + (BUTTON_HEIGHT - continueText.GetHeight()) / 2);
-
-        // Draw the close button (red X)
-        SDL_Rect closeButtonRect = {
-            destRect.x + CLOSE_BUTTON_X,
-            destRect.y + CLOSE_BUTTON_Y,
-            CLOSE_BUTTON_SIZE,
-            CLOSE_BUTTON_SIZE
-        };
-        SDL_SetRenderDrawColor(screen, 255, 0, 0, 255); // Red color for the X
-        SDL_RenderDrawLine(screen, closeButtonRect.x, closeButtonRect.y, closeButtonRect.x + closeButtonRect.w, closeButtonRect.y + closeButtonRect.h);
-        SDL_RenderDrawLine(screen, closeButtonRect.x + closeButtonRect.w, closeButtonRect.y, closeButtonRect.x, closeButtonRect.y + closeButtonRect.h);
+        TextOb continue_text;
+        continue_text.SetText("Continue");
+        continue_text.SetFont(font_);
+        continue_text.SetColor(TextOb::WHITE_TEXT);
+        continue_text.LoadFromRenderText(font_, screen);
+        continue_text.RenderText(screen, continue_btn.x + (continue_btn.w - continue_text.GetWidth()) / 2, continue_btn.y + (continue_btn.h - continue_text.GetHeight()) / 2);
     }
 }
+
 
 // Cần điều chỉnh cả hàm HandleEvent để sử dụng cùng kích thước khung
 int MainMenu::HandleEvent(SDL_Event& event, int& current_mark) {
